@@ -1,13 +1,14 @@
 /* Integração do HTML do Stitch com Code.gs v3. Mantém os componentes e o Pix existentes. */
 (() => {
   'use strict';
-  const state = { ready: false, busy: false, syncing: false, mine: [], drafts: new Set(), checkout: [], bridge: null, recovery: false, canonicalPhone: false, readableRecovery: false, revision: 0 };
+  const state = { ready: false, busy: false, syncing: false, mine: [], drafts: new Set(), checkout: [], bridge: null, recovery: false, canonicalPhone: false, readableRecovery: false, personalDelivery: false, revision: 0 };
   const ui = window.RegistryUI;
   const el = id => document.getElementById(id);
   const money = n => Number(n).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const active = r => r.status === 'reservada';
-  const unpaid = r => active(r) && r.pagamento !== 'Pago';
+  const delivery = r => r.formaPagamento === 'Entrega pessoal' && r.entrega === 'Confirmada';
+  const unpaid = r => active(r) && r.pagamento !== 'Pago' && !delivery(r);
   const old = { init: app.init.bind(app), go: app.goToPage.bind(app) };
 
   class RegistryBridge {
@@ -90,7 +91,7 @@
         }) : Promise.resolve([])
       ]);
       if (revision !== state.revision) return;
-      if (health) { state.recovery = health.features?.includes('recovery-code') || false; state.canonicalPhone = health.features?.includes('canonical-phone') || false; state.readableRecovery = health.features?.includes('readable-recovery') || false; }
+      if (health) { state.recovery = health.features?.includes('recovery-code') || false; state.canonicalPhone = health.features?.includes('canonical-phone') || false; state.readableRecovery = health.features?.includes('readable-recovery') || false; state.personalDelivery = health.features?.includes('personal-delivery') || false; }
       state.mine = mine;
       for (const id of state.drafts) if (!items.some(g => g.id === id && g.disponivel)) state.drafts.delete(id);
       saveDrafts();
@@ -148,7 +149,7 @@
     el('pix-copy-input').value = payload; app.renderPixQrCode(payload);
   }
   function render() {
-    app.renderGifts(); app.updateHeaderState(); app.updateSelectedBanner(); renderMine(); renderSummary();
+    app.renderGifts(); app.updateHeaderState(); app.updateSelectedBanner(); renderMine(); renderSummary(); renderDeliveryThanks();
   }
   function renderMine() {
     const box = el('registry-mine'); if (!box) return;
@@ -165,18 +166,26 @@
     records.forEach(r => {
       const row = document.createElement('div'); row.className = 'border-t border-sand py-3 flex flex-wrap items-center justify-between gap-3';
       const title = document.createElement('div');
-      const paid = r.pagamento === 'Pago';
-      title.innerHTML = '<strong class="block text-sm">' + escape(r.presenteNome) + '</strong><span class="text-xs ' + (paid ? 'text-olive-700' : 'text-charcoal-500') + '">' + (paid ? 'Pagamento confirmado' : 'Reservado · aguardando pagamento') + '</span>';
+      const paid = r.pagamento === 'Pago', personal = delivery(r);
+      title.innerHTML = '<strong class="block text-sm">' + escape(r.presenteNome) + '</strong><span class="text-xs ' + (paid || personal ? 'text-olive-700' : 'text-charcoal-500') + '">' + (personal ? 'Entrega pessoal confirmada · sem pagamento pelo site' : paid ? 'Pagamento confirmado' : 'Reservado · aguardando pagamento') + '</span>';
       row.append(title);
       if (!paid) {
         const actions = document.createElement('div'); actions.className = 'flex gap-3 text-xs';
-        const pay = document.createElement('button'); pay.textContent = 'Ver pagamento'; pay.className = 'underline text-olive-700';
-        pay.onclick = () => { state.checkout = [r.presenteId]; aggregate(); app.selectPaymentMethod(r.formaPagamento === 'Cartão' ? 'card' : 'pix'); old.go('pagamento'); };
+        const pay = document.createElement('button'); pay.textContent = personal ? 'Ver entrega e avisar Pedro' : 'Ver pagamento'; pay.className = 'underline text-olive-700';
+        pay.onclick = () => { state.checkout = [r.presenteId]; if (personal) { renderDeliveryThanks(); old.go('entrega'); } else { aggregate(); app.selectPaymentMethod(r.formaPagamento === 'Cartão' ? 'card' : 'pix'); old.go('pagamento'); } };
         const change = document.createElement('button'); change.textContent = 'Trocar presente'; change.className = 'underline text-terracotta-700';
         change.onclick = () => app.removeReservedGift(r.presenteId);
         pay.disabled = change.disabled = state.busy; actions.append(pay, change); row.append(actions);
       }
       box.append(row);
+    });
+  }
+  function renderDeliveryThanks() {
+    const list = el('delivery-gift-list'); if (!list) return;
+    list.replaceChildren();
+    state.mine.filter(r => state.checkout.includes(r.presenteId) && active(r) && delivery(r)).forEach(r => {
+      const item = document.createElement('li'); item.textContent = r.presenteNome;
+      const code = document.createElement('small'); code.textContent = r.presenteId + ' · Entrega pessoal confirmada'; item.append(code); list.append(item);
     });
   }
   function renderSummary() {
@@ -206,6 +215,14 @@
 
   app.init = function () {
     ui.init(); old.init(); this.unavailableGifts = [];
+    const methods = ['pix', 'card', 'delivery'];
+    this.selectPaymentMethod('pix');
+    methods.forEach(method => el('option-' + method + '-box').addEventListener('keydown', event => {
+      if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) return;
+      event.preventDefault();
+      const index = event.key === 'Home' ? 0 : event.key === 'End' ? 2 : (methods.indexOf(method) + (['ArrowRight', 'ArrowDown'].includes(event.key) ? 1 : 2)) % methods.length;
+      this.selectPaymentMethod(methods[index]); el('option-' + methods[index] + '-box').focus();
+    }));
     if (!this.guestData?.id || !/^[a-f0-9]{64}$/i.test(this.guestData?.token || '') || typeof this.guestData?.name !== 'string') clearIdentity();
     this.updateGuestBadge();
     const draft = ui.storage.read('ps_registry_drafts');
@@ -294,7 +311,7 @@
     if (this.sortMode === 'price-desc') filtered.sort((a, b) => b.pix - a.pix);
     if (this.sortMode === 'name-asc') filtered.sort((a, b) => a.name.localeCompare(b.name));
     const available = GIFTS_DATABASE.filter(g => g.disponivel).length;
-    const paid = GIFTS_DATABASE.filter(g => g.status === 'pago').length;
+    const paid = GIFTS_DATABASE.filter(g => g.status === 'pago' || g.status === 'entrega_confirmada').length;
     const reserved = GIFTS_DATABASE.filter(g => g.status === 'reservado').length;
     const blocked = GIFTS_DATABASE.filter(g => g.status === 'indisponivel').length;
     el('gifts-counters').textContent = state.ready ? available + (available === 1 ? ' disponível' : ' disponíveis') + ' · ' + reserved + (reserved === 1 ? ' reservado' : ' reservados') + ' · ' + paid + (paid === 1 ? ' confirmado' : ' confirmados') + (blocked ? ' · ' + blocked + (blocked === 1 ? ' indisponível' : ' indisponíveis') : '') : 'Aguardando conexão';
@@ -306,7 +323,7 @@
       const description = g.desc && g.desc !== g.name ? '<p class="text-xs text-charcoal-500">' + escape(g.desc) + '</p>' : '';
       card.innerHTML = '<div>' + (photo ? '<img class="gift-photo" src="' + escape(photo.src) + '" alt="' + escape(photo.alt || g.name) + '" width="320" height="180" loading="lazy" decoding="async"><p class="gift-photo-note">Imagem ilustrativa</p>' : '') + '<span class="text-xs text-olive-700">' + escape(g.cat) + (g.priority ? ' · Prioridade' : '') + '</span><h3 class="font-serif text-xl my-2">' + escape(g.name) + '</h3>' + description + '</div><div class="mt-4"><strong class="text-olive-700">' + money(g.pix) + '</strong>' + (g.pix !== g.card ? '<span class="block text-xs mt-1">Cartão: ' + money(g.card) + '</span>' : '') + '</div>';
       const button = document.createElement('button'); button.className = 'w-full mt-4 py-3 rounded-xl border border-sand text-sm disabled:opacity-60';
-      button.textContent = own ? (own.pagamento === 'Pago' ? 'Pagamento confirmado' : 'Reservado para você') : selected ? 'Remover da seleção' : !g.disponivel && state.ready ? (g.status === 'pago' ? 'Presente confirmado' : 'Já reservado') : 'Escolher este presente';
+      button.textContent = own ? (delivery(own) ? 'Sua entrega está confirmada' : own.pagamento === 'Pago' ? 'Pagamento confirmado' : 'Reservado para você') : selected ? 'Remover da seleção' : !g.disponivel && state.ready ? (['pago', 'entrega_confirmada'].includes(g.status) ? 'Presente confirmado' : 'Já reservado') : 'Escolher este presente';
       button.disabled = !state.ready || state.busy || !!own || !g.disponivel;
       button.onclick = () => selected ? this.unselectGift(g.id) : this.chooseGift(g.id); card.append(button); grid.append(card);
     });
@@ -349,10 +366,16 @@
     });
   };
   app.proceedPaymentChoice = async function () {
-    await operation('Preparando o pagamento…', async () => {
+    const personal = this.selectedPayment === 'delivery';
+    await operation(personal ? 'Confirmando sua entrega pessoal…' : 'Preparando o pagamento…', async () => {
       const ids = state.checkout; if (!ids.length) throw new Error('Selecione um presente.');
-      const result = await state.bridge.request('reserve', { ...credentials(), presenteIds: ids, formaPagamento: this.selectedPayment === 'pix' ? 'Pix' : 'Cartão' });
+      if (personal && !state.personalDelivery) throw new Error('A entrega pessoal ainda precisa ser ativada na conexão da lista. Sua reserva continua salva; tente novamente mais tarde.');
+      const result = await state.bridge.request(personal ? 'personal-delivery' : 'reserve', { ...credentials(), presenteIds: ids, ...(personal ? {} : { formaPagamento: this.selectedPayment === 'pix' ? 'Pix' : 'Cartão' }) });
       accept(result);
+      if (personal) {
+        if (state.mine.filter(r => ids.includes(r.presenteId) && active(r) && delivery(r)).length !== ids.length) throw new Error('Não foi possível confirmar todos os itens. Confira Meus presentes antes de tentar novamente.');
+        renderDeliveryThanks(); old.go('entrega'); return;
+      }
       if (state.mine.filter(r => ids.includes(r.presenteId) && unpaid(r)).length !== ids.length) {
         old.go('lista'); throw new Error('O pagamento já foi confirmado. Confira Meus presentes.');
       }
@@ -360,6 +383,8 @@
     });
   };
   app.removeReservedGift = async function (id) {
+    const personal = state.mine.some(r => r.presenteId === id && active(r) && delivery(r));
+    if (state.busy || (personal && !window.confirm('Cancelar a entrega pessoal deste presente? Ele ficará disponível para outras pessoas. Só confirme se você não pretende mais entregá-lo.'))) return;
     await operation('Liberando o presente…', async () => {
       accept(await state.bridge.request('release', { ...credentials(), presenteIds: [id] }));
       state.checkout = state.checkout.filter(x => x !== id); state.drafts.delete(id); old.go('lista'); message('Presente liberado. Você já pode escolher outro.');
@@ -375,4 +400,12 @@
   }
   app.sendPixVoucherWhatsApp = () => whatsapp(false);
   app.openWhatsAppCard = () => whatsapp(true);
+  app.openWhatsAppDelivery = function () {
+    const records = state.mine.filter(r => state.checkout.includes(r.presenteId) && active(r) && delivery(r));
+    if (!records.length) { message('Confira sua entrega em Meus presentes antes de avisar Pedro.', true); return; }
+    const text = 'Olá, Pedro e Samara! Sou ' + app.guestData.name + '.\n\nConfirmei no site que vou providenciar por conta própria e entregar pessoalmente:\n\n' +
+      records.map(r => '• ' + r.presenteNome + ' (' + r.presenteId + ')').join('\n') +
+      '\n\nOs itens já estão separados para mim. Não farei o pagamento deles pelo site. Podemos combinar a entrega?';
+    window.open('https://wa.me/557588861151?text=' + encodeURIComponent(text), '_blank', 'noopener,noreferrer');
+  };
 })();

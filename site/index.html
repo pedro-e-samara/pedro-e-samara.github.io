@@ -597,7 +597,7 @@
     <!-- ========================================== -->
     <section id="view-pagamento" class="page-view space-y-6">
       <div class="text-center space-y-1">
-        <span class="text-xs uppercase tracking-[0.2em] text-olive-600 font-medium">Pagamento</span>
+        <span class="text-xs uppercase tracking-[0.2em] text-olive-600 font-medium">Seu presente</span>
         <h2 class="font-serif text-2xl sm:text-3xl font-medium text-charcoal-900">Como você deseja presentear?</h2>
         <p class="text-xs sm:text-sm text-charcoal-700">Escolha a opção mais conveniente para você.</p>
       </div>
@@ -615,9 +615,9 @@
       </div>
 
       <!-- Payment Methods Options -->
-      <div class="space-y-3">
+      <div class="space-y-3" role="radiogroup" aria-label="Como deseja presentear">
         <!-- OPTION 1: PIX (Selected by default) -->
-        <div id="option-pix-box" onclick="app.selectPaymentMethod('pix')" class="p-4 rounded-2xl border-2 border-terracotta-500 bg-terracotta-50/60 cursor-pointer transition-all shadow-xs space-y-2">
+        <button type="button" role="radio" aria-checked="true" id="option-pix-box" onclick="app.selectPaymentMethod('pix')" class="registry-payment-option p-4 rounded-2xl border-2 border-terracotta-500 bg-terracotta-50/60 cursor-pointer transition-all shadow-xs space-y-2">
           <div class="flex items-start justify-between">
             <div class="flex items-center gap-3">
               <div class="w-10 h-10 rounded-xl bg-olive-50 text-olive-700 border border-olive-200 flex items-center justify-center">
@@ -635,10 +635,10 @@
           <p class="text-xs text-charcoal-600 leading-relaxed pl-13">
             Receba um QR Code e o código Pix Copia e Cola com o valor exato do presente. Pagamento feito diretamente na conta do casal.
           </p>
-        </div>
+        </button>
 
         <!-- OPTION 2: CARTÃO -->
-        <div id="option-card-box" onclick="app.selectPaymentMethod('card')" class="p-4 rounded-2xl border-2 border-sand bg-white cursor-pointer hover:border-sand/90 transition-all space-y-2">
+        <button type="button" role="radio" aria-checked="false" id="option-card-box" onclick="app.selectPaymentMethod('card')" class="registry-payment-option p-4 rounded-2xl border-2 border-sand bg-white cursor-pointer hover:border-sand/90 transition-all space-y-2">
           <div class="flex items-start justify-between">
             <div class="flex items-center gap-3">
               <div class="w-10 h-10 rounded-xl bg-ivory-100 text-charcoal-700 border border-sand flex items-center justify-center">
@@ -656,12 +656,25 @@
           <p class="text-xs text-charcoal-600 leading-relaxed pl-13">
             Fale com o noivo pelo WhatsApp e receba um link de pagamento seguro para parcelamento no cartão.
           </p>
-        </div>
+        </button>
+
+        <!-- OPTION 3: COMPRA POR CONTA PRÓPRIA -->
+        <button type="button" role="radio" aria-checked="false" id="option-delivery-box" onclick="app.selectPaymentMethod('delivery')" class="registry-payment-option p-4 rounded-2xl border-2 border-sand bg-white cursor-pointer transition-all space-y-2">
+          <span class="flex items-start justify-between gap-3">
+            <span class="flex items-center gap-3">
+              <span class="w-10 h-10 rounded-xl bg-olive-50 text-olive-700 border border-olive-200 flex items-center justify-center shrink-0"><i data-lucide="gift" class="w-5 h-5"></i></span>
+              <span><span class="block font-serif text-lg font-medium text-charcoal-900">Entregar pessoalmente</span><span class="text-xs font-medium text-olive-700">Comprar por conta própria ou levar o que já comprei</span></span>
+            </span>
+            <span class="w-5 h-5 rounded-full border-2 border-sand flex items-center justify-center shrink-0"><span id="delivery-radio-dot" class="w-2.5 h-2.5 rounded-full bg-transparent"></span></span>
+          </span>
+          <span class="block text-xs text-charcoal-600 leading-relaxed">Você escolhe onde comprar e combina a entrega com o casal. Não há pagamento nem cobrança pelo site.</span>
+        </button>
       </div>
+      <p id="delivery-choice-note" class="registry-note" hidden>Ao confirmar, os itens ficam separados para você e a entrega é registrada automaticamente. Isso não significa que o casal já recebeu os presentes.</p>
 
       <!-- Action Button -->
       <button onclick="app.proceedPaymentChoice()" class="w-full py-3.5 px-6 rounded-xl bg-terracotta-500 hover:bg-terracotta-600 text-white font-medium text-base shadow-sm flex items-center justify-center gap-2 transition-all">
-        <span>Continuar</span>
+        <span id="payment-continue-label">Continuar</span>
         <i data-lucide="arrow-right" class="w-4 h-4"></i>
       </button>
     </section>
@@ -812,6 +825,22 @@
             Voltar e escolher outra forma de pagamento
           </button>
         </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- ENTREGA PESSOAL CONFIRMADA                -->
+    <!-- ========================================== -->
+    <section id="view-entrega" class="page-view space-y-6">
+      <div class="bg-ivory-50 rounded-2xl p-6 sm:p-8 border border-sand/80 text-center space-y-5">
+        <div class="mx-auto w-14 h-14 rounded-full bg-olive-50 text-olive-700 flex items-center justify-center"><i data-lucide="gift" class="w-7 h-7"></i></div>
+        <div><span class="text-xs uppercase tracking-[0.2em] text-olive-600">Entrega pessoal confirmada</span><h2 class="font-serif text-3xl mt-2 text-charcoal-900">Obrigado por fazer parte do nosso lar!</h2></div>
+        <p class="text-sm text-charcoal-700 leading-relaxed">Seu carinho faz toda a diferença. Registramos que você vai providenciar os presentes abaixo e entregá-los pessoalmente a Pedro e Samara.</p>
+        <ul id="delivery-gift-list" class="registry-delivery-list text-left"></ul>
+        <p class="registry-note">Os itens já estão indisponíveis para outros convidados. Você não precisa pagar pelo site nem aguardar aprovação dos noivos.</p>
+        <button type="button" onclick="app.openWhatsAppDelivery()" class="w-full py-4 px-5 rounded-xl bg-green-700 hover:bg-green-800 text-white font-medium flex items-center justify-center gap-2"><i data-lucide="message-circle" class="w-5 h-5"></i><span>Avisar Pedro no WhatsApp</span></button>
+        <p class="text-xs text-charcoal-500 leading-relaxed">O botão abre uma mensagem pronta para você enviar e combinar a entrega. Sua confirmação já está salva, mesmo sem enviar a mensagem.</p>
+        <button type="button" onclick="app.goToPage('lista')" class="w-full py-3 text-sm underline text-olive-700">Ver meus presentes e escolher outros</button>
       </div>
     </section>
 
@@ -1509,23 +1538,17 @@
       },
 
       selectPaymentMethod(method) {
+        if (!['pix', 'card', 'delivery'].includes(method)) return;
         this.selectedPayment = method;
-        const pixBox = document.getElementById('option-pix-box');
-        const cardBox = document.getElementById('option-card-box');
-        const pixDot = document.getElementById('pix-radio-dot');
-        const cardDot = document.getElementById('card-radio-dot');
-
-        if (method === 'pix') {
-          pixBox.className = 'p-4 rounded-2xl border-2 border-terracotta-500 bg-terracotta-50/60 cursor-pointer transition-all shadow-xs space-y-2';
-          cardBox.className = 'p-4 rounded-2xl border-2 border-sand bg-white cursor-pointer hover:border-sand/90 transition-all space-y-2';
-          pixDot.className = 'w-2.5 h-2.5 rounded-full bg-terracotta-500';
-          cardDot.className = 'w-2.5 h-2.5 rounded-full bg-transparent';
-        } else {
-          cardBox.className = 'p-4 rounded-2xl border-2 border-terracotta-500 bg-terracotta-50/60 cursor-pointer transition-all shadow-xs space-y-2';
-          pixBox.className = 'p-4 rounded-2xl border-2 border-sand bg-white cursor-pointer hover:border-sand/90 transition-all space-y-2';
-          cardDot.className = 'w-2.5 h-2.5 rounded-full bg-terracotta-500';
-          pixDot.className = 'w-2.5 h-2.5 rounded-full bg-transparent';
-        }
+        ['pix', 'card', 'delivery'].forEach(option => {
+          const selected = option === method, box = document.getElementById('option-' + option + '-box');
+          box.className = 'registry-payment-option p-4 rounded-2xl border-2 cursor-pointer transition-all space-y-2 ' + (selected ? 'border-terracotta-500 bg-terracotta-50/60 shadow-xs' : 'border-sand bg-white');
+          box.setAttribute('aria-checked', String(selected));
+          box.tabIndex = selected ? 0 : -1;
+          document.getElementById(option + '-radio-dot').className = 'w-2.5 h-2.5 rounded-full ' + (selected ? 'bg-terracotta-500' : 'bg-transparent');
+        });
+        document.getElementById('delivery-choice-note').hidden = method !== 'delivery';
+        document.getElementById('payment-continue-label').textContent = method === 'delivery' ? 'Confirmar entrega pessoal' : 'Continuar';
       },
 
       proceedPaymentChoice() {
