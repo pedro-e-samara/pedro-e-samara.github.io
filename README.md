@@ -4,7 +4,7 @@ Site de presentes de casamento e construção do novo lar.
 
 **Celebração:** 21 de outubro de 2026.
 
-**Site:** https://rodrigocostaaa60.github.io/pedro-e-samara/
+**Site:** https://pedro-e-samara.github.io/
 
 ## Publicação
 
@@ -17,7 +17,7 @@ Script. O endpoint público está em `site/registry-config.js`; ele não é uma 
 A planilha, as credenciais dos convidados, o código administrativo, os backups e
 os testes não fazem parte deste repositório.
 
-O backend deve autorizar a origem exata `https://rodrigocostaaa60.github.io`.
+O backend deve autorizar a origem exata `https://pedro-e-samara.github.io`.
 Não é necessário domínio próprio nem servidor contratado.
 
 ## Imagens
