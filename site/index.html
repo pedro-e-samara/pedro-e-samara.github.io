@@ -1,0 +1,1619 @@
+<!DOCTYPE html><html lang="pt-BR"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Celebre com Pedro e Samara em 21 de outubro de 2026. Escolha um presente para o novo lar e acompanhe sua reserva.">
+  <link rel="stylesheet" href="registry-ui.css">
+  <title>Pedro &amp; Samara — Lista de Presentes &amp; Novo Lar</title>
+  <!-- Google Fonts: Cormorant Garamond & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            ivory: {
+              50: '#FDFBF7',
+              100: '#FAF6F0',
+              200: '#F4ECE1',
+              300: '#ECE2D4',
+            },
+            terracotta: {
+              50: '#FAF0ED',
+              100: '#F4DDD6',
+              500: '#C87D65',
+              600: '#B66A53',
+              700: '#944E3A',
+            },
+            olive: {
+              50: '#F3F5F2',
+              100: '#E4E8E2',
+              600: '#5F7059',
+              700: '#4A5745',
+            },
+            sand: '#E6DECE',
+            gold: '#C5A880',
+            charcoal: {
+              900: '#23201D',
+              800: '#34302C',
+              700: '#4B4641',
+              500: '#736D66',
+            }
+          },
+          fontFamily: {
+            serif: ['"Cormorant Garamond"', 'serif'],
+            sans: ['"Inter"', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    #qrcode { width: 100%; max-width: 256px; }
+    #qrcode img, #qrcode canvas { max-width: 100%; height: auto; }
+    /* Smooth transitions and custom touches */
+    body {
+      background-color: #FAF6F0;
+      color: #34302C;
+      -webkit-font-smoothing: antialiased;
+    }
+    .custom-scroll::-webkit-scrollbar {
+      height: 4px;
+      width: 4px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #D9CFC4;
+      border-radius: 4px;
+    }
+    .page-view {
+      display: none;
+      opacity: 0;
+      transition: opacity 0.25s ease-in-out;
+    }
+    .page-view.active {
+      display: block;
+      opacity: 1;
+    }
+    /* Elegant subtle organic patterns */
+    .bg-ivory-texture {
+      background-image: radial-gradient(#E8E0D5 0.75px, transparent 0.75px);
+      background-size: 20px 20px;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans bg-ivory-100 bg-ivory-texture selection:bg-terracotta-100 selection:text-terracotta-700">
+  <dialog id="registry-loader" open aria-labelledby="registry-loader-title" aria-describedby="registry-loader-detail" aria-busy="true">
+    <div class="registry-loading-card">
+      <img src="assets/monogram.svg" alt="" width="64" height="64">
+      <span class="registry-spinner" aria-hidden="true"></span>
+      <h2 id="registry-loader-title">Preparando nossa lista…</h2>
+      <p id="registry-loader-detail">Estamos consultando os presentes disponíveis. Só um instante.</p>
+      <p id="registry-loader-slow" hidden>A conexão está demorando um pouco. Aguarde a confirmação antes de tentar novamente.</p>
+    </div>
+  </dialog>
+
+  <!-- TOP HEADER (Appears on pages 2..9 or persistent sticky) -->
+  <header id="global-header" class="sticky top-0 z-40 bg-ivory-50/95 backdrop-blur-md border-b border-sand/60 px-4 py-3 transition-all duration-200">
+    <div class="max-w-2xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <button id="header-back-btn" onclick="app.goBack()" class="p-1.5 -ml-1 text-charcoal-700 hover:text-terracotta-600 rounded-full hover:bg-ivory-200 transition-colors" title="Voltar">
+          <i data-lucide="chevron-left" class="w-5 h-5"></i>
+        </button>
+        <button onclick="app.goToPage('capa')" class="flex items-center gap-2 text-left group">
+          <img src="assets/monogram.svg" alt="Monograma P &amp; S" class="w-7 h-7 object-contain rounded-full shadow-xs">
+          <span class="font-serif text-xl tracking-wide text-charcoal-900 group-hover:text-terracotta-600 transition-colors font-medium">Pedro &amp; Samara</span>
+        </button>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <!-- Guest status indicator pill -->
+        <button type="button" id="guest-badge" onclick="app.openAccount()" class="hidden items-center gap-1.5 px-2.5 py-1 bg-ivory-200 text-charcoal-700 rounded-full text-xs font-medium cursor-pointer hover:bg-sand/70 transition">
+          <i data-lucide="user" class="w-3.5 h-3.5 text-olive-600"></i>
+          <span id="guest-name-pill" class="truncate max-w-[120px]">Convidado</span>
+        </button>
+        <!-- Selected item summary badge button -->
+        <button id="header-cart-btn" onclick="app.openCartOrList()" class="relative p-2 text-charcoal-700 hover:text-terracotta-600 rounded-full hover:bg-ivory-200 transition">
+          <i data-lucide="gift" class="w-5 h-5"></i>
+          <span id="selected-badge-count" class="hidden absolute top-1 right-1 w-2.5 h-2.5 bg-terracotta-500 rounded-full border-2 border-ivory-50"></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN VIEWPORT CONTAINER (Max width 2xl on desktop for comfortable editorial reading) -->
+  <main class="flex-1 w-full max-w-2xl mx-auto px-4 py-4 md:py-6 relative">
+
+    <!-- ========================================== -->
+    <!-- PÁGINA 1 — CAPA                            -->
+    <!-- ========================================== -->
+    <section id="view-capa" class="page-view active space-y-6">
+      <!-- Monogram & Hero Heading -->
+      <div class="text-center pt-2 pb-1 space-y-3">
+        <div class="inline-flex items-center justify-center p-2 rounded-full bg-ivory-50 border border-sand/70 shadow-xs mb-1">
+          <img src="assets/monogram.svg" alt="Monograma P &amp; S" class="w-16 h-16 md:w-20 md:h-20 object-contain">
+        </div>
+        <div class="space-y-1">
+          <span class="text-xs uppercase tracking-[0.25em] text-olive-600 font-medium">Lista de Presentes de Casamento &amp; Novo Lar</span>
+          <h1 class="font-serif text-3xl sm:text-4xl md:text-5xl font-medium tracking-tight text-charcoal-900">
+            Pedro &amp; Samara
+          </h1>
+        </div>
+        <p class="font-serif italic text-base sm:text-lg text-charcoal-700 max-w-md mx-auto leading-relaxed px-2">
+          “Estamos construindo um novo lar e ficaremos muito felizes em compartilhar este momento com você.”
+        </p>
+      </div>
+
+      <!-- Hero Photo Carousel -->
+      <div id="couple-carousel" class="relative bg-ivory-50 p-2 rounded-2xl border border-sand/80 shadow-sm" role="region" aria-label="Fotos de Pedro e Samara" aria-roledescription="carrossel">
+        <div class="couple-home-frame relative overflow-hidden rounded-xl bg-ivory-200">
+          <div id="carousel-track" class="w-full h-full relative">
+            <img id="carousel-img-0" src="assets/couple/pedro-samara-01.webp" alt="Pedro &amp; Samara sorrindo ao ar livre" class="absolute inset-0 w-full h-full object-cover transition-opacity duration-500 opacity-100">
+            <img id="carousel-img-1" src="assets/couple/pedro-samara-02.webp" alt="Pedro &amp; Samara em momento afetuoso no campo" class="absolute inset-0 w-full h-full object-cover transition-opacity duration-500 opacity-0">
+            <img id="carousel-img-2" src="assets/couple/pedro-samara-03.webp" alt="Pedro &amp; Samara organizando os detalhes do novo lar" class="absolute inset-0 w-full h-full object-cover transition-opacity duration-500 opacity-0">
+          </div>
+          <!-- Carousel navigation controls -->
+          <button onclick="app.prevPhoto()" class="absolute left-2.5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/85 text-charcoal-800 backdrop-blur-xs flex items-center justify-center shadow-xs hover:bg-white transition-all" aria-label="Foto anterior">
+            <i data-lucide="chevron-left" class="w-5 h-5"></i>
+          </button>
+          <button onclick="app.nextPhoto()" class="absolute right-2.5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/85 text-charcoal-800 backdrop-blur-xs flex items-center justify-center shadow-xs hover:bg-white transition-all" aria-label="Próxima foto">
+            <i data-lucide="chevron-right" class="w-5 h-5"></i>
+          </button>
+        </div>
+        <!-- Indicators -->
+        <div class="flex items-center justify-center gap-2 pt-2.5 pb-1">
+          <button onclick="app.setPhoto(0)" id="dot-0" class="w-6 h-1.5 rounded-full bg-terracotta-500 transition-all"></button>
+          <button onclick="app.setPhoto(1)" id="dot-1" class="w-2 h-1.5 rounded-full bg-sand hover:bg-terracotta-500/50 transition-all"></button>
+          <button onclick="app.setPhoto(2)" id="dot-2" class="w-2 h-1.5 rounded-full bg-sand hover:bg-terracotta-500/50 transition-all"></button>
+        </div>
+      </div>
+
+      <!-- Wedding Info Box: Date & Location & Biblical verse -->
+      <div class="bg-ivory-50/90 rounded-2xl p-5 border border-sand/70 text-center space-y-3">
+        <!-- Botanical flourish / discreet decorative divider -->
+        <div class="flex items-center justify-center gap-2 text-olive-600">
+          <span class="h-px w-10 bg-sand"></span>
+          <i data-lucide="sparkles" class="w-3.5 h-3.5 text-gold"></i>
+          <span class="h-px w-10 bg-sand"></span>
+        </div>
+
+        <div class="space-y-1">
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-olive-50 text-olive-700 text-xs font-medium rounded-full border border-olive-100">
+            <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+            <span>Data da Celebração</span>
+          </div>
+          <p class="font-serif text-lg text-charcoal-800 font-medium pt-1">
+            <time datetime="2026-10-21">21 de outubro de 2026</time>
+          </p>
+          <p class="text-xs text-charcoal-500 flex items-center justify-center gap-1">
+            <i data-lucide="map-pin" class="w-3 h-3 text-terracotta-500"></i>
+            <span>Brasil</span>
+          </p>
+        </div>
+
+        <blockquote id="home-scripture" class="pt-3 border-t border-sand/50 max-w-sm mx-auto space-y-2">
+          <p class="font-serif italic text-base leading-relaxed text-charcoal-700">
+            “É melhor serem dois que um, pois um ajuda o outro a alcançar o sucesso. Se um cair, o outro o ajuda a levantar-se…”
+          </p>
+          <cite class="block not-italic text-xs uppercase tracking-wider text-charcoal-500 font-medium">Eclesiastes 4:9–10</cite>
+        </blockquote>
+      </div>
+
+      <!-- Primary & Secondary CTA Buttons -->
+      <div class="space-y-3 pt-2">
+        <button onclick="app.goToPage('identificacao')" class="w-full py-4 px-6 rounded-xl bg-terracotta-500 hover:bg-terracotta-600 active:scale-[0.99] text-white font-medium text-base sm:text-lg shadow-sm shadow-terracotta-500/20 flex items-center justify-center gap-2.5 transition-all">
+          <i data-lucide="gift" class="w-5 h-5"></i>
+          <span>Ver lista de presentes</span>
+          <i data-lucide="arrow-right" class="w-4 h-4 ml-1"></i>
+        </button>
+
+        <button onclick="app.goToPage('historia')" class="w-full py-3.5 px-6 rounded-xl bg-transparent hover:bg-ivory-200 border border-sand/90 text-charcoal-800 font-medium text-sm sm:text-base flex items-center justify-center gap-2 transition-all">
+          <i data-lucide="heart" class="w-4 h-4 text-terracotta-500"></i>
+          <span>Nossa história</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- PÁGINA 2 — NOSSA HISTÓRIA                  -->
+    <!-- ========================================== -->
+    <section id="view-historia" class="page-view space-y-6">
+      <div class="text-center space-y-2">
+        <span class="text-xs uppercase tracking-[0.2em] text-olive-600 font-medium">Amor &amp; Construção</span>
+        <h2 class="font-serif text-3xl sm:text-4xl font-medium text-charcoal-900">Nossa história</h2>
+        <p class="font-serif italic text-base sm:text-lg text-charcoal-700 max-w-lg mx-auto leading-relaxed">
+          “Entre encontros, cuidados e escolhas, estamos construindo uma vida juntos. Queremos compartilhar com você um pouco do caminho que nos trouxe até aqui.”
+        </p>
+      </div>
+
+      <!-- Photo grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="couple-story-frame rounded-xl overflow-hidden border border-sand shadow-2xs">
+          <img src="assets/couple/pedro-samara-02.webp" alt="Pedro &amp; Samara sorrindo juntos" class="w-full h-full object-cover">
+        </div>
+        <div class="couple-story-frame rounded-xl overflow-hidden border border-sand shadow-2xs">
+          <img src="assets/couple/pedro-samara-03.webp" alt="Pedro e Samara juntos ao ar livre" class="w-full h-full object-cover">
+        </div>
+      </div>
+
+      <!-- Emotional Timeline -->
+      <div class="bg-ivory-50 rounded-2xl p-6 border border-sand/80 shadow-2xs space-y-6">
+        <div class="relative pl-6 space-y-6 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-sand">
+          <!-- Step 1 -->
+          <div class="relative">
+            <span class="absolute -left-6 top-1 w-4 h-4 rounded-full bg-terracotta-500 border-2 border-ivory-50"></span>
+            <h3 class="font-serif text-xl font-medium text-charcoal-900">1. Quando nos conhecemos</h3>
+            <div class="text-sm text-charcoal-700 mt-3 leading-relaxed space-y-3">
+              <p>
+                Em setembro de 2025, durante uma viagem, Pedro e Samara se conheceram pela primeira vez. Foi Pedro quem tomou a iniciativa de se aproximar.
+              </p>
+              <p>
+                Para Samara, a primeira impressão foi: “Que cara estranho! kkk”. Mas ela também percebeu que ele era simpático, insistente e melancólico. Já Pedro se encantou logo pelo sorriso marcante de Samara e pensou: “Essa pode ser a mulher da minha vida”.
+              </p>
+            </div>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="relative">
+            <span class="absolute -left-6 top-1 w-4 h-4 rounded-full bg-olive-600 border-2 border-ivory-50"></span>
+            <h3 class="font-serif text-xl font-medium text-charcoal-900">2. O início da nossa história</h3>
+            <div class="text-sm text-charcoal-700 mt-3 leading-relaxed space-y-3">
+              <p>
+                A história começou a ganhar força nos pequenos momentos. Um deles foi um piquenique que fizeram longe de tudo e de todos — ou, pelo menos, era o que imaginavam. Quando chegaram, descobriram que uma família grande também estava se refrescando na represa ali perto. 😂
+              </p>
+              <p>
+                Outro momento marcante aconteceu quando Pedro estava doente e chamou Samara para ir vê-lo. Ela foi e cuidou dele. Para Pedro, aquele gesto mostrou que ela realmente queria algo sério.
+              </p>
+              <p>
+                Com o tempo, a saudade começou a entregar o que o coração já sabia. Pedro sentia falta dela mesmo quando estavam longe, e qualquer música, programa de TV ou filme fazia lembrar Samara. Para ela, a certeza veio cerca de três meses depois do início do relacionamento.
+              </p>
+              <p>
+                O namoro simplesmente aconteceu, sem um pedido oficial. Mas o pedido de casamento veio, e de um jeito inesquecível: em <strong class="font-medium text-charcoal-900">7 de outubro</strong>, com LEDs, flores e a intenção de transformar aquele relacionamento em uma vida a dois.
+              </p>
+            </div>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="relative">
+            <span class="absolute -left-6 top-1 w-4 h-4 rounded-full bg-gold border-2 border-ivory-50"></span>
+            <h3 class="font-serif text-xl font-medium text-charcoal-900">3. A construção do nosso lar</h3>
+            <div class="text-sm text-charcoal-700 mt-3 leading-relaxed space-y-3">
+              <p>
+                A decisão de construir um lar nasceu quando os dois entenderam que deveriam ser “um só”. Eles sabem que não está sendo fácil e que os desafios fazem parte do caminho. Mas escolher um ao outro significa, justamente, aprender a enfrentar tudo juntos.
+              </p>
+              <p>
+                Ainda há muitas conquistas pela frente. O que, meses atrás, estava apenas no papel agora começa a se tornar realidade. São decisões, planos, responsabilidades e a busca pelos recursos necessários para transformar sonhos em um lar.
+              </p>
+              <p>
+                O desejo para esse lar vai muito além de móveis e paredes: paz, apoio, amor, saúde, prosperidade, fé e Deus em primeiro lugar. Um lugar onde os dois possam crescer juntos e seguir construindo uma vida de abundância.
+              </p>
+              <p>
+                Resiliência é uma palavra que acompanha esse começo. Mesmo com as dificuldades, Pedro e Samara continuam buscando a Deus e escolhendo um ao outro todos os dias. Porque essa história ainda está apenas começando.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <blockquote id="story-scripture" class="rounded-2xl bg-olive-50 border border-olive-100 px-5 py-6 sm:px-7 space-y-3 text-center">
+        <div class="font-serif italic text-lg leading-relaxed text-olive-700 space-y-3">
+          <p>“O amor é paciente, o amor é bondoso. Não inveja, não se vangloria, não se orgulha.</p>
+          <p>Não maltrata, não procura seus interesses, não se ira facilmente, não guarda rancor.</p>
+          <p>O amor não se alegra com a injustiça, mas se alegra com a verdade. Tudo sofre, tudo crê, tudo espera, tudo suporta.”</p>
+        </div>
+        <cite class="block not-italic text-xs uppercase tracking-wider font-medium text-olive-600">1 Coríntios 13:4–7</cite>
+      </blockquote>
+
+      <div class="text-center px-3 py-2 space-y-2">
+        <p class="font-serif text-2xl font-medium text-charcoal-900">Pedro Henrique &amp; Samara</p>
+        <p class="font-serif italic text-base sm:text-lg text-charcoal-700 leading-relaxed max-w-lg mx-auto">
+          O que começou em uma viagem virou amor, virou compromisso e agora está se tornando um lar. ❤️
+        </p>
+      </div>
+
+      <!-- CTA to list -->
+      <div class="pt-2">
+        <button onclick="app.goToPage('identificacao')" class="w-full py-4 px-6 rounded-xl bg-terracotta-500 hover:bg-terracotta-600 active:scale-[0.99] text-white font-medium text-base shadow-sm flex items-center justify-center gap-2 transition-all">
+          <i data-lucide="gift" class="w-5 h-5"></i>
+          <span>Conhecer a lista</span>
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- PÁGINA 3 — IDENTIFICAÇÃO DO CONVIDADO      -->
+    <!-- ========================================== -->
+    <section id="view-identificacao" class="page-view space-y-6">
+      <div class="text-center space-y-2">
+        <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-terracotta-50 text-terracotta-600 border border-terracotta-100 mb-1">
+          <i data-lucide="heart-handshake" class="w-6 h-6"></i>
+        </div>
+        <h2 class="font-serif text-2xl sm:text-3xl font-medium text-charcoal-900">Antes de escolher seu presente</h2>
+        <p class="text-sm sm:text-base text-charcoal-700 max-w-md mx-auto leading-relaxed">
+          “Queremos registrar com carinho cada pessoa que participa deste momento tão importante para nós.”
+        </p>
+      </div>
+
+      <!-- Form Box -->
+      <form id="guest-form" onsubmit="app.handleGuestSubmit(event)" class="bg-ivory-50 rounded-2xl p-5 sm:p-6 border border-sand/80 shadow-2xs space-y-4">
+        <!-- Full Name -->
+        <div class="space-y-1.5">
+          <label for="input-guest-name" class="block text-xs font-medium uppercase tracking-wider text-charcoal-700">
+            Nome completo <span class="text-terracotta-600">*</span>
+          </label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-charcoal-400">
+              <i data-lucide="user" class="w-4 h-4 text-charcoal-500"></i>
+            </span>
+            <input type="text" id="input-guest-name" placeholder="Ex: Maria Clara Silva" class="w-full pl-10 pr-3 py-3 bg-white border border-sand rounded-xl text-charcoal-900 placeholder:text-charcoal-400 focus:outline-none focus:ring-2 focus:ring-terracotta-500/30 focus:border-terracotta-500 text-sm transition" required="">
+          </div>
+          <p id="err-name" class="hidden text-xs text-red-600 flex items-center gap-1 mt-1">
+            <i data-lucide="alert-circle" class="w-3.5 h-3.5"></i>
+            Por favor, informe seu nome completo (nome e sobrenome).
+          </p>
+        </div>
+
+        <!-- Phone / WhatsApp -->
+        <div class="space-y-1.5">
+          <label for="input-guest-phone" class="block text-xs font-medium uppercase tracking-wider text-charcoal-700">
+            Telefone ou WhatsApp <span class="text-terracotta-600">*</span>
+          </label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-charcoal-400">
+              <i data-lucide="phone" class="w-4 h-4 text-charcoal-500"></i>
+            </span>
+            <input type="tel" id="input-guest-phone" placeholder="Ex: (11) 98765-4321" class="w-full pl-10 pr-3 py-3 bg-white border border-sand rounded-xl text-charcoal-900 placeholder:text-charcoal-400 focus:outline-none focus:ring-2 focus:ring-terracotta-500/30 focus:border-terracotta-500 text-sm transition" required="">
+          </div>
+          <p id="err-phone" class="hidden text-xs text-red-600 flex items-center gap-1 mt-1">
+            <i data-lucide="alert-circle" class="w-3.5 h-3.5"></i>
+            Informe um número de telefone ou WhatsApp válido com DDD.
+          </p>
+        </div>
+
+        <!-- Consent Checkbox -->
+        <div class="pt-1">
+          <label class="flex items-start gap-3 cursor-pointer select-none">
+            <input type="checkbox" id="input-consent" class="mt-1 w-4 h-4 text-terracotta-600 rounded border-sand focus:ring-terracotta-500 cursor-pointer" required="">
+            <span class="text-xs text-charcoal-700 leading-snug">
+              Aceito que esses dados sejam utilizados somente para a organização da lista de presentes.
+            </span>
+          </label>
+          <p id="err-consent" class="hidden text-xs text-red-600 flex items-center gap-1 mt-1">
+            <i data-lucide="alert-circle" class="w-3.5 h-3.5"></i>
+            É necessário autorizar o uso para identificação do presente.
+          </p>
+        </div>
+
+        <!-- Status banners: Error, Loading, Success -->
+        <div id="form-loading" class="hidden p-3 bg-ivory-200 text-charcoal-700 text-xs rounded-xl flex items-center justify-center gap-2">
+          <i data-lucide="loader-2" class="w-4 h-4 animate-spin text-terracotta-500"></i>
+          <span>Registrando com carinho seu acesso...</span>
+        </div>
+
+        <div id="form-error" class="hidden p-3 bg-red-50 border border-red-100 text-red-700 text-xs rounded-xl flex items-center gap-2">
+          <i data-lucide="alert-circle" class="w-4 h-4 shrink-0 text-red-600"></i>
+          <span>Verifique os campos destacados para continuar.</span>
+        </div>
+
+        <div id="form-success" class="hidden p-3 bg-olive-50 border border-olive-100 text-olive-700 text-xs rounded-xl flex items-center gap-2">
+          <i data-lucide="check-circle-2" class="w-4 h-4 shrink-0 text-olive-600"></i>
+          <span>Identificação realizada com sucesso! Redirecionando...</span>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" id="btn-submit-guest" class="w-full mt-2 py-3.5 px-6 rounded-xl bg-terracotta-500 hover:bg-terracotta-600 text-white font-medium text-base shadow-sm flex items-center justify-center gap-2 transition-all">
+          <span>Continuar para a lista</span>
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </button>
+
+        <p class="text-[11px] text-center text-charcoal-500 pt-1 leading-relaxed">
+          Seus dados não serão utilizados para publicidade ou compartilhados com terceiros.
+        </p>
+      </form>
+
+      <div class="text-center">
+        <button type="button" onclick="app.goToPage('capa')" class="text-xs text-charcoal-500 hover:text-charcoal-800 underline transition">
+          Voltar para a página inicial
+        </button>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- PÁGINA 4 — LISTA DE PRESENTES              -->
+    <!-- ========================================== -->
+    <section id="view-lista" class="page-view space-y-5">
+      <!-- Title & Intro -->
+      <div class="space-y-1.5">
+        <div class="flex items-center justify-between">
+          <span class="text-xs uppercase tracking-[0.2em] text-olive-600 font-medium">Nosso Novo Lar</span>
+          <span id="gifts-counters" class="text-xs text-charcoal-500 bg-ivory-200 px-2.5 py-1 rounded-full font-medium">
+            49 disponíveis
+          </span>
+        </div>
+        <h2 class="font-serif text-2xl sm:text-3xl font-medium text-charcoal-900">
+          Escolha um presente para o nosso novo lar
+        </h2>
+        <p class="text-xs sm:text-sm text-charcoal-700 leading-relaxed">
+          Cada presente representa uma forma especial de participar da nossa história. Escolha o item que deseja oferecer e siga para a forma de pagamento.
+        </p>
+      </div>
+
+      <!-- Search & Filters Container -->
+      <div class="bg-ivory-50 rounded-2xl p-4 border border-sand/70 space-y-3">
+        <!-- Search input -->
+        <div class="relative">
+          <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-charcoal-400">
+            <i data-lucide="search" class="w-4 h-4"></i>
+          </span>
+          <input type="text" id="gift-search" oninput="app.filterGifts()" placeholder="Buscar por nome (ex: Panelas, TV, Toalhas...)" class="w-full pl-10 pr-9 py-2.5 bg-white border border-sand rounded-xl text-xs sm:text-sm text-charcoal-900 placeholder:text-charcoal-400 focus:outline-none focus:ring-2 focus:ring-terracotta-500/20 focus:border-terracotta-500 transition">
+          <button id="search-clear-btn" onclick="app.clearSearch()" class="hidden absolute inset-y-0 right-0 pr-3 flex items-center text-charcoal-400 hover:text-charcoal-700">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <!-- Quick filter bar: Categories horizontally scrollable -->
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between text-xs text-charcoal-500">
+            <span>Filtrar por categoria:</span>
+            <div class="flex items-center gap-1.5">
+              <!-- Priority toggle -->
+              <button id="filter-priority-btn" onclick="app.togglePriorityFilter()" class="px-2.5 py-1 rounded-lg border text-xs font-medium transition flex items-center gap-1 bg-white border-sand text-charcoal-700 hover:border-terracotta-500">
+                <i data-lucide="star" class="w-3 h-3 text-gold"></i>
+                <span>Itens prioritários</span>
+              </button>
+              <!-- Sort dropdown -->
+              <select id="gift-sort" onchange="app.filterGifts()" class="bg-white border border-sand rounded-lg px-2 py-1 text-xs text-charcoal-700 focus:outline-none focus:border-terracotta-500">
+                <option value="default">Ordem padrão</option>
+                <option value="price-asc">Menor preço</option>
+                <option value="price-desc">Maior preço</option>
+                <option value="name-asc">Nome (A-Z)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="flex gap-1.5 overflow-x-auto pb-1 custom-scroll -mx-1 px-1">
+            <button onclick="app.setCategory('todos')" data-cat="todos" class="cat-pill shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition bg-terracotta-500 text-white shadow-2xs">
+              Todos
+            </button>
+            <button onclick="app.setCategory('Cozinha')" data-cat="Cozinha" class="cat-pill shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition bg-white border border-sand text-charcoal-700 hover:bg-ivory-200">
+              Cozinha
+            </button>
+            <button onclick="app.setCategory('Quarto')" data-cat="Quarto" class="cat-pill shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition bg-white border border-sand text-charcoal-700 hover:bg-ivory-200">
+              Quarto
+            </button>
+            <button onclick="app.setCategory('Banheiro')" data-cat="Banheiro" class="cat-pill shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition bg-white border border-sand text-charcoal-700 hover:bg-ivory-200">
+              Banheiro
+            </button>
+            <button onclick="app.setCategory('Para servir')" data-cat="Para servir" class="cat-pill shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition bg-white border border-sand text-charcoal-700 hover:bg-ivory-200">
+              Para servir
+            </button>
+            <button onclick="app.setCategory('Limpeza')" data-cat="Limpeza" class="cat-pill shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition bg-white border border-sand text-charcoal-700 hover:bg-ivory-200">
+              Limpeza
+            </button>
+            <button onclick="app.setCategory('Eletrônicos e Eletrodomésticos')" data-cat="Eletrônicos e Eletrodomésticos" class="cat-pill shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition bg-white border border-sand text-charcoal-700 hover:bg-ivory-200">
+              Eletrônicos
+            </button>
+            <button onclick="app.setCategory('Experiências e Sociais')" data-cat="Experiências e Sociais" class="cat-pill shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition bg-white border border-sand text-charcoal-700 hover:bg-ivory-200">
+              Experiências
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active selection banner (if any gift chosen) -->
+      <div id="active-gift-banner" class="hidden p-3.5 bg-terracotta-50 border border-terracotta-100 rounded-xl flex items-center justify-between gap-3">
+        <div class="flex items-center gap-2.5 overflow-hidden">
+          <div class="w-8 h-8 rounded-lg bg-terracotta-500 text-white flex items-center justify-center shrink-0">
+            <i data-lucide="check" class="w-4 h-4"></i>
+          </div>
+          <div class="truncate">
+            <p class="text-xs text-terracotta-700 font-medium">Você escolheu:</p>
+            <p id="banner-gift-name" class="text-sm font-semibold text-charcoal-900 truncate">Jogo de panelas</p>
+          </div>
+        </div>
+        <button onclick="app.goToPage('resumo')" class="shrink-0 px-3 py-1.5 bg-terracotta-500 text-white text-xs font-medium rounded-lg hover:bg-terracotta-600 transition flex items-center gap-1 shadow-2xs">
+          <span>Ver Resumo</span>
+          <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+        </button>
+      </div>
+
+      <!-- Empty state container -->
+      <div id="gifts-empty-state" class="hidden p-8 bg-ivory-50 rounded-2xl border border-sand text-center space-y-3">
+        <div class="w-12 h-12 rounded-full bg-ivory-200 text-charcoal-400 mx-auto flex items-center justify-center">
+          <i data-lucide="search-x" class="w-6 h-6"></i>
+        </div>
+        <p class="font-serif text-lg text-charcoal-800">Nenhum presente encontrado</p>
+        <p class="text-xs text-charcoal-500 max-w-xs mx-auto">Tente alterar o termo digitado ou limpar os filtros de categoria.</p>
+        <button onclick="app.resetAllFilters()" class="px-4 py-2 bg-ivory-200 text-charcoal-800 rounded-lg text-xs font-medium hover:bg-sand transition">
+          Limpar filtros
+        </button>
+      </div>
+
+      <!-- Gift Cards Grid: 1 col on mobile, 2 col on tablet/desktop for elegant spacing -->
+      <div id="gift-cards-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Rendered dynamically by JavaScript -->
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- PÁGINA 5 — RESUMO DO PRESENTE              -->
+    <!-- ========================================== -->
+    <section id="view-resumo" class="page-view space-y-6">
+      <div class="text-center space-y-1">
+        <span class="text-xs uppercase tracking-[0.2em] text-olive-600 font-medium">Confirmação</span>
+        <h2 class="font-serif text-3xl font-medium text-charcoal-900">Seu presente</h2>
+        <p class="text-xs sm:text-sm text-charcoal-700">Confira os detalhes do item selecionado com carinho.</p>
+      </div>
+
+      <div class="bg-ivory-50 rounded-2xl p-5 border border-sand/80 shadow-2xs space-y-4">
+        <!-- Product Card in Summary -->
+        <div class="flex gap-4 items-center">
+          <div id="resumo-img-box" class="w-20 h-20 sm:w-24 sm:h-24 rounded-xl bg-ivory-200 border border-sand/80 flex items-center justify-center text-charcoal-500 shrink-0 overflow-hidden">
+            <i data-lucide="gift" class="w-8 h-8 text-terracotta-500"></i>
+          </div>
+          <div class="space-y-1">
+            <span id="resumo-category" class="inline-block px-2 py-0.5 bg-ivory-200 text-charcoal-700 text-[11px] rounded-md font-medium">Cozinha</span>
+            <h3 id="resumo-title" class="font-serif text-xl font-medium text-charcoal-900 leading-snug">Jogo de panelas</h3>
+            <p id="resumo-code" class="text-xs text-charcoal-500 font-mono">Código: PS-COZ-01</p>
+          </div>
+        </div>
+
+        <div class="border-t border-sand/70 pt-3 space-y-2">
+          <div class="flex justify-between items-center text-sm">
+            <span class="text-charcoal-600">Valor via Pix:</span>
+            <span id="resumo-price-pix" class="font-serif text-lg font-bold text-olive-700">R$ 488,00</span>
+          </div>
+          <div id="resumo-card-price-row" class="flex justify-between items-center text-xs text-charcoal-500">
+            <span>Valor via Cartão:</span>
+            <span id="resumo-price-card" class="font-medium text-charcoal-700">R$ 540,00</span>
+          </div>
+        </div>
+
+        <div class="p-3 bg-ivory-200/70 rounded-xl text-xs text-charcoal-700 flex items-start gap-2">
+          <i data-lucide="info" class="w-4 h-4 text-terracotta-500 shrink-0 mt-0.5"></i>
+          <span>Presente reservado para <strong id="resumo-guest-name">Convidado</strong>. Você poderá concluir o envio escolhendo Pix ou Cartão.</span>
+        </div>
+
+        <div class="pt-2 flex flex-col gap-2.5">
+          <button onclick="app.goToPage('pagamento')" class="w-full py-3.5 px-6 rounded-xl bg-terracotta-500 hover:bg-terracotta-600 text-white font-medium text-base shadow-sm flex items-center justify-center gap-2 transition-all">
+            <span>Continuar para pagamento</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
+          <button onclick="app.goToPage('lista')" class="w-full py-2.5 px-4 rounded-xl text-xs font-medium text-charcoal-600 hover:text-charcoal-900 hover:bg-ivory-200 transition">
+            Alterar presente
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- PÁGINA 6 — ESCOLHA DA FORMA DE PAGAMENTO   -->
+    <!-- ========================================== -->
+    <section id="view-pagamento" class="page-view space-y-6">
+      <div class="text-center space-y-1">
+        <span class="text-xs uppercase tracking-[0.2em] text-olive-600 font-medium">Pagamento</span>
+        <h2 class="font-serif text-2xl sm:text-3xl font-medium text-charcoal-900">Como você deseja presentear?</h2>
+        <p class="text-xs sm:text-sm text-charcoal-700">Escolha a opção mais conveniente para você.</p>
+      </div>
+
+      <!-- Gift Mini Header -->
+      <div class="p-3.5 bg-ivory-50 rounded-xl border border-sand/80 flex items-center justify-between text-xs">
+        <div>
+          <span class="text-charcoal-500 block">Item escolhido:</span>
+          <strong id="pay-item-title" class="text-sm font-serif text-charcoal-900">Jogo de panelas</strong>
+        </div>
+        <div class="text-right">
+          <span class="text-charcoal-500 block">Código:</span>
+          <span id="pay-item-code" class="font-mono text-charcoal-700">PS-COZ-01</span>
+        </div>
+      </div>
+
+      <!-- Payment Methods Options -->
+      <div class="space-y-3">
+        <!-- OPTION 1: PIX (Selected by default) -->
+        <div id="option-pix-box" onclick="app.selectPaymentMethod('pix')" class="p-4 rounded-2xl border-2 border-terracotta-500 bg-terracotta-50/60 cursor-pointer transition-all shadow-xs space-y-2">
+          <div class="flex items-start justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-olive-50 text-olive-700 border border-olive-200 flex items-center justify-center">
+                <i data-lucide="qr-code" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <h3 class="font-serif text-lg font-medium text-charcoal-900">Pagar com Pix</h3>
+                <span id="pay-pix-val" class="text-sm font-bold text-olive-700">R$ 488,00</span>
+              </div>
+            </div>
+            <div class="w-5 h-5 rounded-full border-2 border-terracotta-500 flex items-center justify-center">
+              <div id="pix-radio-dot" class="w-2.5 h-2.5 rounded-full bg-terracotta-500"></div>
+            </div>
+          </div>
+          <p class="text-xs text-charcoal-600 leading-relaxed pl-13">
+            Receba um QR Code e o código Pix Copia e Cola com o valor exato do presente. Pagamento feito diretamente na conta do casal.
+          </p>
+        </div>
+
+        <!-- OPTION 2: CARTÃO -->
+        <div id="option-card-box" onclick="app.selectPaymentMethod('card')" class="p-4 rounded-2xl border-2 border-sand bg-white cursor-pointer hover:border-sand/90 transition-all space-y-2">
+          <div class="flex items-start justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-ivory-100 text-charcoal-700 border border-sand flex items-center justify-center">
+                <i data-lucide="credit-card" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <h3 class="font-serif text-lg font-medium text-charcoal-900">Pagar com cartão</h3>
+                <span id="pay-card-val" class="text-sm font-bold text-charcoal-700">R$ 540,00</span>
+              </div>
+            </div>
+            <div class="w-5 h-5 rounded-full border-2 border-sand flex items-center justify-center">
+              <div id="card-radio-dot" class="w-2.5 h-2.5 rounded-full bg-transparent"></div>
+            </div>
+          </div>
+          <p class="text-xs text-charcoal-600 leading-relaxed pl-13">
+            Fale com o noivo pelo WhatsApp e receba um link de pagamento seguro para parcelamento no cartão.
+          </p>
+        </div>
+      </div>
+
+      <!-- Action Button -->
+      <button onclick="app.proceedPaymentChoice()" class="w-full py-3.5 px-6 rounded-xl bg-terracotta-500 hover:bg-terracotta-600 text-white font-medium text-base shadow-sm flex items-center justify-center gap-2 transition-all">
+        <span>Continuar</span>
+        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+      </button>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- PÁGINA 7 — PAGAMENTO VIA PIX               -->
+    <!-- ========================================== -->
+    <section id="view-pix" class="page-view space-y-6">
+      <div class="text-center space-y-1">
+        <span class="text-xs uppercase tracking-[0.2em] text-olive-600 font-medium">Pix Oficial</span>
+        <h2 class="font-serif text-2xl sm:text-3xl font-medium text-charcoal-900">Pagamento via Pix</h2>
+        <p class="text-xs sm:text-sm text-charcoal-700 max-w-sm mx-auto">
+          Escaneie o QR Code usando o aplicativo do seu banco ou copie o código Pix Copia e Cola.
+        </p>
+      </div>
+
+      <!-- QR Code & Data Card -->
+      <div class="bg-ivory-50 rounded-2xl p-6 border border-sand/80 shadow-2xs text-center space-y-4">
+        <!-- QR Code display area with ample white space -->
+        <div class="bg-white p-6 rounded-2xl border border-sand/60 shadow-xs max-w-[240px] mx-auto">
+          <div id="qrcode-container" class="aspect-square flex items-center justify-center bg-white rounded-xl overflow-hidden border border-sand/40 p-3">
+            <div id="qrcode" aria-label="QR Code Pix"></div>
+          </div>
+          <span class="inline-block mt-2 text-[11px] text-charcoal-500 font-mono">Chave Pix: pedroh.16@hotmail.com</span>
+        </div>
+
+        <!-- Details list -->
+        <div class="bg-white p-4 rounded-xl border border-sand/70 space-y-2 text-left text-xs">
+          <div class="flex justify-between py-1 border-b border-sand/40">
+            <span class="text-charcoal-500">Recebedor:</span>
+            <span class="font-medium text-charcoal-900">Pedro Henrique de Jesus Santos</span>
+          </div>
+          <div class="flex justify-between py-1 border-b border-sand/40">
+            <span class="text-charcoal-500">Presente:</span>
+            <span id="pix-det-item" class="font-medium text-charcoal-900">Jogo de panelas</span>
+          </div>
+          <div class="flex justify-between py-1 border-b border-sand/40">
+            <span class="text-charcoal-500">Código interno:</span>
+            <span id="pix-det-code" class="font-mono text-charcoal-700">PS-COZ-01</span>
+          </div>
+          <div class="flex justify-between py-1">
+            <span class="text-charcoal-500 font-semibold">Valor exato:</span>
+            <span id="pix-det-val" class="font-serif text-lg font-bold text-olive-700">R$ 488,00</span>
+          </div>
+        </div>
+
+        <!-- Pix Copia e Cola Field -->
+        <div class="space-y-1.5 text-left">
+          <label class="block text-xs font-medium text-charcoal-700">Código Pix Copia e Cola:</label>
+          <div class="flex items-center gap-2">
+            <input type="text" id="pix-copy-input" readonly="" value="Gerando código Pix..." class="w-full bg-white border border-sand rounded-xl px-3 py-2.5 text-xs text-charcoal-600 font-mono truncate focus:outline-none select-all">
+            <button onclick="app.copyPixCode()" id="btn-copy-pix" class="shrink-0 px-4 py-2.5 bg-olive-600 hover:bg-olive-700 text-white text-xs font-medium rounded-xl flex items-center gap-1.5 transition shadow-2xs">
+              <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+              <span id="btn-copy-text">Copiar</span>
+            </button>
+          </div>
+          <!-- Success feedback toast -->
+          <div id="pix-copied-toast" class="hidden p-2.5 bg-olive-50 border border-olive-200 text-olive-800 text-xs rounded-xl flex items-center gap-2 mt-2">
+            <i data-lucide="check" class="w-4 h-4 text-olive-600 shrink-0"></i>
+            <span>Código Pix copiado com sucesso! Abra o app do seu banco para colar.</span>
+          </div>
+        </div>
+
+        <!-- WhatsApp voucher confirmation note -->
+        <div class="p-3 bg-ivory-200/60 rounded-xl text-left text-xs text-charcoal-700 space-y-1">
+          <p class="font-medium text-charcoal-900 flex items-center gap-1">
+            <i data-lucide="bell" class="w-3.5 h-3.5 text-terracotta-500"></i>
+            Aviso importante:
+          </p>
+          <p class="leading-relaxed">
+            Depois de realizar o pagamento, você pode enviar o comprovante pelo WhatsApp para facilitar a confirmação do presente.
+          </p>
+        </div>
+
+        <!-- Actions -->
+        <div class="pt-2 space-y-2">
+          <button onclick="app.sendPixVoucherWhatsApp()" class="w-full py-3.5 px-6 rounded-xl bg-green-700 hover:bg-green-800 text-white font-medium text-sm flex items-center justify-center gap-2 shadow-2xs transition">
+            <i data-lucide="message-circle" class="w-4 h-4"></i>
+            <span>Enviar comprovante pelo WhatsApp</span>
+          </button>
+          <button onclick="app.goToPage('agradecimento')" class="w-full py-3 px-6 rounded-xl bg-terracotta-500 hover:bg-terracotta-600 text-white font-medium text-sm flex items-center justify-center gap-2 shadow-2xs transition">
+            <span>Já realizei o pagamento — Concluir</span>
+            <i data-lucide="check" class="w-4 h-4"></i>
+          </button>
+          <button onclick="app.goToPage('pagamento')" class="w-full py-2 text-xs text-charcoal-500 hover:text-charcoal-800">
+            Voltar e trocar forma de pagamento
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- PÁGINA 8 — PAGAMENTO VIA CARTÃO            -->
+    <!-- ========================================== -->
+    <section id="view-cartao" class="page-view space-y-6">
+      <div class="text-center space-y-1">
+        <span class="text-xs uppercase tracking-[0.2em] text-olive-600 font-medium">Cartão de Crédito</span>
+        <h2 class="font-serif text-2xl sm:text-3xl font-medium text-charcoal-900">Pagamento com cartão</h2>
+        <p class="text-xs sm:text-sm text-charcoal-700 max-w-sm mx-auto">
+          Para sua segurança, o pagamento será combinado diretamente com o noivo por meio de um link de pagamento.
+        </p>
+      </div>
+
+      <div class="bg-ivory-50 rounded-2xl p-6 border border-sand/80 shadow-2xs space-y-5">
+        <!-- Order details summary -->
+        <div class="bg-white p-4 rounded-xl border border-sand/70 space-y-2 text-xs">
+          <div class="flex justify-between py-1 border-b border-sand/40">
+            <span class="text-charcoal-500">Convidado:</span>
+            <span id="card-guest-name" class="font-medium text-charcoal-900">Convidado</span>
+          </div>
+          <div class="flex justify-between py-1 border-b border-sand/40">
+            <span class="text-charcoal-500">Presente escolhido:</span>
+            <span id="card-item-title" class="font-medium text-charcoal-900">Jogo de panelas</span>
+          </div>
+          <div class="flex justify-between py-1 border-b border-sand/40">
+            <span class="text-charcoal-500">Código do presente:</span>
+            <span id="card-item-code" class="font-mono text-charcoal-700">PS-COZ-01</span>
+          </div>
+          <div class="flex justify-between py-1">
+            <span class="text-charcoal-500 font-semibold">Valor no Cartão:</span>
+            <span id="card-item-price" class="font-serif text-lg font-bold text-charcoal-900">R$ 540,00</span>
+          </div>
+        </div>
+
+        <!-- WhatsApp CTA -->
+        <div class="space-y-3">
+          <button onclick="app.openWhatsAppCard()" class="w-full py-4 px-6 rounded-xl bg-green-700 hover:bg-green-800 text-white font-medium text-base shadow-sm flex items-center justify-center gap-2.5 transition">
+            <i data-lucide="message-circle" class="w-5 h-5"></i>
+            <span>Falar com Pedro pelo WhatsApp</span>
+          </button>
+
+          <button onclick="app.goToPage('agradecimento')" class="w-full py-3 px-6 rounded-xl bg-terracotta-500 hover:bg-terracotta-600 text-white font-medium text-sm flex items-center justify-center gap-2 transition">
+            <span>Mensagem enviada — Ver agradecimento</span>
+          </button>
+        </div>
+
+        <!-- Security Notice -->
+        <div class="p-3.5 bg-amber-50/80 border border-amber-200/80 rounded-xl text-left text-xs text-amber-900 flex items-start gap-2.5">
+          <i data-lucide="shield-alert" class="w-4 h-4 text-amber-700 shrink-0 mt-0.5"></i>
+          <div>
+            <strong class="block font-semibold">Aviso de Segurança:</strong>
+            <span>Não envie número do cartão, senha ou código de segurança pelo WhatsApp. Você receberá um link oficial da plataforma de pagamento seguro para efetuar a transação.</span>
+          </div>
+        </div>
+
+        <div class="text-center">
+          <button onclick="app.goToPage('pagamento')" class="text-xs text-charcoal-500 hover:text-charcoal-800">
+            Voltar e escolher outra forma de pagamento
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- PÁGINA 9 — AGRADECIMENTO                   -->
+    <!-- ========================================== -->
+    <section id="view-agradecimento" class="page-view space-y-6">
+      <div class="bg-ivory-50 rounded-2xl p-6 sm:p-8 border border-sand/80 shadow-2xs text-center space-y-5">
+        <!-- Delicate floral monogram emblem -->
+        <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-ivory-100 border border-sand/90 shadow-2xs p-2">
+          <img src="assets/monogram.svg" alt="Monograma Pedro &amp; Samara" class="w-full h-full object-contain">
+        </div>
+
+        <div class="space-y-2 max-w-md mx-auto">
+          <span class="text-xs uppercase tracking-[0.25em] text-olive-600 font-medium">Gratidão</span>
+          <h2 class="font-serif text-3xl sm:text-4xl font-medium text-charcoal-900 leading-tight">
+            Obrigado por fazer parte deste momento
+          </h2>
+          <p class="font-serif italic text-base sm:text-lg text-charcoal-700 leading-relaxed pt-1">
+            “O carinho de vocês torna a construção do nosso novo lar ainda mais especial.”
+          </p>
+          <p class="text-sm font-medium text-terracotta-600 pt-2">
+            Com carinho, Pedro &amp; Samara
+          </p>
+        </div>
+
+        <!-- Divider with heart -->
+        <div class="flex items-center justify-center gap-2 text-sand max-w-xs mx-auto">
+          <span class="h-px flex-1 bg-sand"></span>
+          <i data-lucide="heart" class="w-4 h-4 text-terracotta-500 fill-terracotta-500/20"></i>
+          <span class="h-px flex-1 bg-sand"></span>
+        </div>
+
+        <!-- Couple portrait recap -->
+        <div class="max-w-xs mx-auto rounded-xl overflow-hidden border border-sand shadow-2xs">
+          <img src="assets/couple/pedro-samara-01.webp" alt="Pedro &amp; Samara sorrindo" class="w-full aspect-[16/9] object-cover">
+        </div>
+
+        <!-- Buttons -->
+        <div class="pt-2 space-y-2.5 max-w-sm mx-auto">
+          <button onclick="app.shareWebsite()" class="w-full py-3.5 px-6 rounded-xl bg-olive-600 hover:bg-olive-700 text-white font-medium text-sm flex items-center justify-center gap-2 shadow-2xs transition">
+            <i data-lucide="share-2" class="w-4 h-4"></i>
+            <span>Compartilhar lista com amigos</span>
+          </button>
+
+          <button onclick="app.goToPage('lista')" class="w-full py-3 px-6 rounded-xl bg-ivory-200 hover:bg-sand text-charcoal-800 font-medium text-sm flex items-center justify-center gap-2 transition">
+            <i data-lucide="gift" class="w-4 h-4 text-terracotta-500"></i>
+            <span>Voltar para a lista de presentes</span>
+          </button>
+        </div>
+
+        <!-- Toast for share fallback -->
+        <div id="share-copied-toast" class="hidden p-2.5 bg-olive-50 border border-olive-200 text-olive-800 text-xs rounded-xl flex items-center justify-center gap-2">
+          <i data-lucide="check" class="w-4 h-4 text-olive-600"></i>
+          <span>Link da lista copiado para a área de transferência!</span>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FORMAL EDITORIAL FOOTER -->
+  <footer class="mt-auto border-t border-sand/70 bg-ivory-50/90 py-8 px-4 text-center">
+    <div class="max-w-2xl mx-auto space-y-3">
+      <div class="flex items-center justify-center gap-2">
+        <img src="assets/monogram.svg" alt="Monograma" class="w-6 h-6 object-contain">
+        <span class="font-serif text-lg text-charcoal-900 font-medium">Pedro &amp; Samara</span>
+      </div>
+
+      <p class="font-serif italic text-xs sm:text-sm text-charcoal-600">
+        “Obrigado por fazer parte da nossa história.”
+      </p>
+
+      <div class="pt-3 border-t border-sand/40 text-[11px] text-charcoal-500 space-y-1">
+        <p class="font-medium text-charcoal-600">
+          Pedro Henrique de Jesus Santos e Samara de Souza Gonçalves
+        </p>
+        <p>Lista de presentes para casamento e estruturação do novo lar</p>
+        <p><a href="assets/products/credits.html" class="underline underline-offset-2 hover:text-terracotta-700" target="_blank" rel="noopener noreferrer">Créditos das imagens ilustrativas</a></p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ========================================== -->
+  <!-- JAVASCRIPT LOGIC & COMPLETE CATALOG DATA   -->
+  <!-- ========================================== -->
+  <script>
+    // Complete gift items dataset precisely matching user requirements
+    const GIFTS_DATABASE = [
+      // COZINHA
+      { id: 'PS-COZ-01', cat: 'Cozinha', name: 'Jogo de panelas', desc: 'Conjunto completo antiaderente para nosso dia a dia na cozinha.', pix: 488.00, card: 540.00, priority: true, icon: 'utensils' },
+      { id: 'PS-COZ-02', cat: 'Cozinha', name: 'Panela de pressão', desc: 'Indispensável e segura para preparar feijão fresquinho e receitas de família.', pix: 94.50, card: 94.50, priority: true, icon: 'flame' },
+      { id: 'PS-COZ-03', cat: 'Cozinha', name: 'Frigideira grande', desc: 'Frigideira funda antiaderente para grelhados e refeições rápidas.', pix: 49.00, card: 53.00, priority: false, icon: 'circle-dot' },
+      { id: 'PS-COZ-04', cat: 'Cozinha', name: 'Jogo de pratos — 6 peças', desc: 'Pratos de cerâmica elegante para compor nossa mesa posta.', pix: 60.00, card: 71.00, priority: true, icon: 'disc' },
+      { id: 'PS-COZ-05', cat: 'Cozinha', name: 'Jogo de copos — 6 peças', desc: 'Copos em vidro lapidado para água e sucos em família.', pix: 39.00, card: 39.00, priority: false, icon: 'cup-soda' },
+      { id: 'PS-COZ-06', cat: 'Cozinha', name: 'Jogo de talheres — 24 peças', desc: 'Faqueiro em aço inox resistente com acabamento clássico.', pix: 62.00, card: 69.00, priority: true, icon: 'utensils-crossed' },
+      { id: 'PS-COZ-07', cat: 'Cozinha', name: 'Jogo de xícaras — 6 peças', desc: 'Xícaras com pires para nosso café da manhã e visitas carinhosas.', pix: 65.00, card: 66.00, priority: false, icon: 'coffee' },
+      { id: 'PS-COZ-08', cat: 'Cozinha', name: 'Jogo de facas de cozinha', desc: 'Facas de corte de precisão com suporte para preparo das refeições.', pix: 81.00, card: 82.00, priority: false, icon: 'scissors' },
+      { id: 'PS-COZ-09', cat: 'Cozinha', name: 'Tábua de corte', desc: 'Tábua higiênica e durável em bambu para cortes culinários.', pix: 45.00, card: 45.00, priority: false, icon: 'box' },
+      { id: 'PS-COZ-10', cat: 'Cozinha', name: 'Escorredor de louça', desc: 'Escorredor compacto com porta-talheres para manter a pia organizada.', pix: 85.00, card: 85.00, priority: false, icon: 'layers' },
+      { id: 'PS-COZ-11', cat: 'Cozinha', name: 'Escorredor de arroz/massa', desc: 'Item prático em inox para escorrer massas e grãos.', pix: 38.00, card: 38.00, priority: false, icon: 'filter' },
+      { id: 'PS-COZ-12', cat: 'Cozinha', name: 'Kit de colheres de silicone/pau', desc: 'Kit de utensílios que não riscam o fundo das panelas.', pix: 46.00, card: 46.00, priority: false, icon: 'sparkle' },
+      { id: 'PS-COZ-13', cat: 'Cozinha', name: 'Peneira', desc: 'Peneira culinária em inox para confeitaria e preparos refinados.', pix: 30.00, card: 30.00, priority: false, icon: 'circle' },
+      { id: 'PS-COZ-14', cat: 'Cozinha', name: 'Ralador', desc: 'Ralador multiuso de quatro faces em inox.', pix: 46.00, card: 46.00, priority: false, icon: 'grid' },
+      { id: 'PS-COZ-15', cat: 'Cozinha', name: 'Etiqueta', desc: 'Kit organizador de etiquetas para potes e temperos.', pix: 66.00, card: 66.00, priority: false, icon: 'tag' },
+      { id: 'PS-COZ-16', cat: 'Cozinha', name: 'Jogo de pirex/travessas', desc: 'Travessas refratárias de vidro para assados no forno.', pix: 60.00, card: 60.00, priority: true, icon: 'box-select' },
+      { id: 'PS-COZ-17', cat: 'Cozinha', name: 'Assadeira', desc: 'Assadeira antiaderente retangular para bolos e tortas.', pix: 62.00, card: 62.00, priority: false, icon: 'square' },
+      { id: 'PS-COZ-18', cat: 'Cozinha', name: 'Forma de bolo', desc: 'Forma com furo central para bolos fofinhos do café da tarde.', pix: 60.00, card: 60.00, priority: false, icon: 'donut' },
+      { id: 'PS-COZ-19', cat: 'Cozinha', name: 'Potes para mantimentos', desc: 'Conjunto de potes herméticos para conservar alimentos com frescor.', pix: 94.00, card: 94.00, priority: true, icon: 'archive' },
+      { id: 'PS-COZ-20', cat: 'Cozinha', name: 'Potes com tampa para alimentos', desc: 'Kit com múltiplos tamanhos para guardar sobras e marmitas.', pix: 39.00, card: 39.00, priority: false, icon: 'boxes' },
+      { id: 'PS-COZ-21', cat: 'Cozinha', name: 'Garrafa térmica', desc: 'Garrafa térmica de alta retenção para café e chá quentinhos.', pix: 88.00, card: 88.00, priority: false, icon: 'thermometer' },
+      { id: 'PS-COZ-22', cat: 'Cozinha', name: 'Jarra para água/suco', desc: 'Jarra em vidro temperado elegante com tampa dosadora.', pix: 54.00, card: 54.00, priority: false, icon: 'glass-water' },
+      { id: 'PS-COZ-23', cat: 'Cozinha', name: 'Panos de prato — 6 unidades', desc: 'Panos felpudos e 100% algodão de alta absorção.', pix: 69.00, card: 69.00, priority: false, icon: 'shirt' },
+      { id: 'PS-COZ-24', cat: 'Cozinha', name: 'Lixeira de cozinha', desc: 'Lixeira de inox com pedal suave e balde removível.', pix: 64.00, card: 64.00, priority: false, icon: 'trash-2' },
+      { id: 'PS-COZ-25', cat: 'Cozinha', name: 'Liquidificador', desc: 'Liquidificador potente com jarra resistente e lâminas em inox.', pix: 135.00, card: 135.00, priority: true, icon: 'zap' },
+      { id: 'PS-COZ-26', cat: 'Cozinha', name: 'Air fryer', desc: 'Fritadeira sem óleo prática para receitas saudáveis e rápidas.', pix: 145.00, card: 145.00, priority: true, icon: 'flame' },
+      { id: 'PS-COZ-27', cat: 'Cozinha', name: 'Sanduicheira', desc: 'Sanduicheira e grill antiaderente para lanches saborosos.', pix: 83.00, card: 83.00, priority: false, icon: 'sandwich' },
+      { id: 'PS-COZ-28', cat: 'Cozinha', name: 'Cafeteira', desc: 'Cafeteira elétrica programável para começar o dia perfumado.', pix: 94.00, card: 94.00, priority: false, icon: 'coffee' },
+
+      // QUARTO
+      { id: 'PS-QUA-01', cat: 'Quarto', name: '2 jogos de cama casal', desc: 'Lençóis 200 fios macios e confortáveis para o descanso do casal.', pix: 71.00, card: 71.00, priority: true, icon: 'bed-double' },
+      { id: 'PS-QUA-02', cat: 'Quarto', name: '2 travesseiros', desc: 'Travesseiros ortopédicos antialérgicos com toque de pluma.', pix: 77.00, card: 77.00, priority: true, icon: 'cloud' },
+      { id: 'PS-QUA-03', cat: 'Quarto', name: '2 protetores de travesseiro', desc: 'Capas protetoras impermeáveis e laváveis.', pix: 35.00, card: 35.00, priority: false, icon: 'shield' },
+      { id: 'PS-QUA-04', cat: 'Quarto', name: 'Protetor de colchão', desc: 'Capa protetora acolchoada para manter o colchão novo e protegido.', pix: 45.00, card: 45.00, priority: false, icon: 'shield-check' },
+      { id: 'PS-QUA-05', cat: 'Quarto', name: 'Edredom casal', desc: 'Edredom dupla face macio e quentinho para noites aconchegantes.', pix: 59.00, card: 59.00, priority: true, icon: 'bed' },
+      { id: 'PS-QUA-06', cat: 'Quarto', name: 'Cobertor casal', desc: 'Cobertor macio de microfibra de toque suave.', pix: 26.00, card: 26.00, priority: false, icon: 'sun' },
+      { id: 'PS-QUA-07', cat: 'Quarto', name: 'Cesto para roupa suja', desc: 'Cesto organizador dobrável com alças e design discreto.', pix: 69.00, card: 69.00, priority: false, icon: 'shopping-bag' },
+      { id: 'PS-QUA-08', cat: 'Quarto', name: 'Kit de cabides', desc: 'Kit de cabides aveludados finos para otimizar espaço no armário.', pix: 31.00, card: 31.00, priority: false, icon: 'hanger' },
+
+      // BANHEIRO
+      { id: 'PS-BAN-01', cat: 'Banheiro', name: '2 jogos de toalhas de banho', desc: 'Toalhas encorpadas 100% algodão de alta maciez e absorção.', pix: 116.00, card: 116.00, priority: true, icon: 'shower-head' },
+      { id: 'PS-BAN-02', cat: 'Banheiro', name: '4 toalhas de rosto', desc: 'Toalhas macias para lavabo e uso diário da família.', pix: 46.00, card: 46.00, priority: false, icon: 'bath' },
+      { id: 'PS-BAN-03', cat: 'Banheiro', name: '2 toalhas de piso', desc: 'Tapetes de chão atoalhados com alta gramatura.', pix: 50.00, card: 50.00, priority: false, icon: 'footprints' },
+      { id: 'PS-BAN-04', cat: 'Banheiro', name: 'Jogo de tapetes para banheiro', desc: 'Conjunto antiderrapante e aveludado para conforto aos pés.', pix: 86.00, card: 86.00, priority: false, icon: 'grid' },
+      { id: 'PS-BAN-05', cat: 'Banheiro', name: 'Lixeira com tampa', desc: 'Lixeira compacta em inox com pedal higiênico para banheiro.', pix: 88.00, card: 88.00, priority: false, icon: 'trash-2' },
+      { id: 'PS-BAN-06', cat: 'Banheiro', name: 'Saboneteira', desc: 'Conjunto de dispenser para sabonete líquido e porta-escovas.', pix: 121.00, card: 121.00, priority: false, icon: 'droplet' },
+      { id: 'PS-BAN-07', cat: 'Banheiro', name: 'Escova sanitária', desc: 'Suporte higiênico discreto com escova de cerdas duráveis.', pix: 85.00, card: 85.00, priority: false, icon: 'brush' },
+      { id: 'PS-BAN-08', cat: 'Banheiro', name: 'Porta-papel higiênico', desc: 'Suporte vertical de piso resistente em aço fosco.', pix: 56.00, card: 56.00, priority: false, icon: 'scroll' },
+
+      // LIMPEZA
+      { id: 'PS-LIM-01', cat: 'Limpeza', name: 'Vassoura', desc: 'Vassoura de cerdas macias que não riscam pisos delicados.', pix: 35.00, card: 35.00, priority: false, icon: 'brush' },
+      { id: 'PS-LIM-02', cat: 'Limpeza', name: 'Rodo', desc: 'Rodo emborrachado para puxar água com facilidade.', pix: 36.00, card: 36.00, priority: false, icon: 'minus' },
+      { id: 'PS-LIM-03', cat: 'Limpeza', name: 'Pá de lixo', desc: 'Pá com borracha na borda para recolhimento rápido.', pix: 39.00, card: 39.00, priority: false, icon: 'inbox' },
+      { id: 'PS-LIM-04', cat: 'Limpeza', name: 'Balde', desc: 'Balde graduado com bico dosador e alça reforçada.', pix: 57.00, card: 57.00, priority: false, icon: 'bucket' },
+      { id: 'PS-LIM-05', cat: 'Limpeza', name: 'Mop', desc: 'Mop giratório com balde centrífuga para facilitar a limpeza da casa.', pix: 76.00, card: 76.00, priority: true, icon: 'rotate-cw' },
+      { id: 'PS-LIM-06', cat: 'Limpeza', name: 'Panos de chão', desc: 'Kit de panos microfibra de alta retenção de pó e líquidos.', pix: 46.00, card: 46.00, priority: false, icon: 'layers' },
+      { id: 'PS-LIM-07', cat: 'Limpeza', name: 'Luvas de limpeza', desc: 'Kit de luvas anatômicas para proteção no dia a dia.', pix: 44.00, card: 44.00, priority: false, icon: 'hand' },
+      { id: 'PS-LIM-08', cat: 'Limpeza', name: 'Varal', desc: 'Varal de chão dobrável em alumínio leve e resistente.', pix: 30.00, card: 30.00, priority: false, icon: 'align-justify' },
+      { id: 'PS-LIM-09', cat: 'Limpeza', name: 'Pregadores de roupa', desc: 'Kit com pregadores duráveis de madeira e silicone.', pix: 120.00, card: 120.00, priority: false, icon: 'paperclip' },
+
+      // PARA SERVIR
+      { id: 'PS-SER-01', cat: 'Para servir', name: 'Saladeira', desc: 'Tigela grande em cerâmica artesanal para saladas e frutas.', pix: 41.00, card: 41.00, priority: false, icon: 'circle-dot' },
+      { id: 'PS-SER-02', cat: 'Para servir', name: 'Bandeja', desc: 'Bandeja em madeira nobre com alças para servir com elegância.', pix: 49.00, card: 49.00, priority: false, icon: 'square' },
+      { id: 'PS-SER-03', cat: 'Para servir', name: 'Toalha de mesa', desc: 'Toalha de mesa em linho e algodão com barra trabalhada.', pix: 44.00, card: 44.00, priority: false, icon: 'table' },
+      { id: 'PS-SER-04', cat: 'Para servir', name: 'Porta-guardanapos', desc: 'Conjunto delicado para compor a mesa de jantar com carinho.', pix: 72.00, card: 72.00, priority: false, icon: 'bookmark' },
+
+      // ELETRÔNICOS E ELETRODOMÉSTICOS
+      { id: 'PS-ELE-01', cat: 'Eletrônicos e Eletrodomésticos', name: 'Ventilador Britânia', desc: 'Ventilador potente e silencioso com tecnologia de economia de energia.', pix: 134.00, card: 134.00, priority: true, icon: 'wind' },
+      { id: 'PS-ELE-02', cat: 'Eletrônicos e Eletrodomésticos', name: 'Smart TV Philco Roku', desc: 'TV inteligente para nossas sessões de cinema em casa.', pix: 920.00, card: 920.00, priority: true, icon: 'tv' },
+
+      // EXPERIÊNCIAS E PRESENTES SOCIAIS
+      { id: 'PS-SOC-01', cat: 'Experiências e Sociais', name: 'Aluguel dos noivos', desc: 'Ajuda especial para a taxa inicial e estabilidade do nosso primeiro lar.', pix: 3000.00, card: 3000.00, priority: true, icon: 'home' },
+      { id: 'PS-SOC-02', cat: 'Experiências e Sociais', name: '1 ano de corte de cabelo', desc: 'Cuidado pessoal para o noivo manter o estilo ao longo do primeiro ano.', pix: 300.00, card: 300.00, priority: false, icon: 'scissors' },
+      { id: 'PS-SOC-03', cat: 'Experiências e Sociais', name: 'Salão da noiva', desc: 'Tratamento de beleza e dia relaxante para a noiva Samara.', pix: 500.00, card: 500.00, priority: true, icon: 'sparkles' },
+      { id: 'PS-SOC-04', cat: 'Experiências e Sociais', name: 'Pacote de viagem para os noivos', desc: 'Nossa inesquecível lua de mel para celebrar o início do casamento.', pix: 8000.00, card: 8000.00, priority: true, icon: 'plane' },
+    ];
+
+    // State Store
+    const app = {
+      currentPage: 'capa',
+      pageHistory: ['capa'],
+      currentPhotoIndex: 0,
+      photoCount: 9,
+      selectedGift: null,
+      selectedPayment: 'pix',
+      guestData: null,
+      activeCategory: 'todos',
+      onlyPriority: false,
+      searchQuery: '',
+      sortMode: 'default',
+      // Simulated already reserved items to showcase unavailable state
+      unavailableGifts: ['PS-LIM-08', 'PS-COZ-22'],
+
+      init() {
+        // Init icons
+        if (window.lucide) {
+          lucide.createIcons();
+        }
+        // Check local storage for guest
+        try {
+          const savedGuest = localStorage.getItem('ps_guest_user');
+          if (savedGuest) {
+            this.guestData = JSON.parse(savedGuest);
+            this.updateGuestBadge();
+          }
+        } catch (e) {}
+
+        this.renderGifts();
+        this.updateHeaderState();
+      },
+
+      goToPage(pageId, pushHistory = true) {
+        if (pageId === this.currentPage) return;
+
+        // Hide current
+        const currentEl = document.getElementById(`view-${this.currentPage}`);
+        if (currentEl) currentEl.classList.remove('active');
+
+        // Show next
+        const nextEl = document.getElementById(`view-${pageId}`);
+        if (nextEl) nextEl.classList.add('active');
+
+        if (pushHistory) {
+          this.pageHistory.push(pageId);
+        }
+        this.currentPage = pageId;
+
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        this.updateHeaderState();
+
+        // Refresh icons
+        setTimeout(() => {
+          if (window.lucide) lucide.createIcons();
+        }, 50);
+      },
+
+      goBack() {
+        if (this.pageHistory.length > 1) {
+          this.pageHistory.pop(); // pop current
+          const prev = this.pageHistory.pop(); // get previous
+          this.goToPage(prev, true);
+        } else {
+          this.goToPage('capa', false);
+        }
+      },
+
+      updateHeaderState() {
+        const backBtn = document.getElementById('header-back-btn');
+        if (this.currentPage === 'capa') {
+          backBtn.classList.add('opacity-0', 'pointer-events-none');
+        } else {
+          backBtn.classList.remove('opacity-0', 'pointer-events-none');
+        }
+
+        const badgeCount = document.getElementById('selected-badge-count');
+        if (this.selectedGift) {
+          badgeCount.classList.remove('hidden');
+        } else {
+          badgeCount.classList.add('hidden');
+        }
+      },
+
+      // Carousel handlers
+      setPhoto(index) {
+        for (let i = 0; i < this.photoCount; i++) {
+          const img = document.getElementById(`carousel-img-${i}`);
+          const dot = document.getElementById(`dot-${i}`);
+          if (i === index) {
+            img.classList.remove('opacity-0');
+            img.classList.add('opacity-100');
+            dot.className = 'w-6 h-1.5 rounded-full bg-terracotta-500 transition-all';
+          } else {
+            img.classList.remove('opacity-100');
+            img.classList.add('opacity-0');
+            dot.className = 'w-2 h-1.5 rounded-full bg-sand hover:bg-terracotta-500/50 transition-all';
+          }
+        }
+        this.currentPhotoIndex = index;
+      },
+
+      nextPhoto() {
+        const next = (this.currentPhotoIndex + 1) % this.photoCount;
+        this.setPhoto(next);
+      },
+
+      prevPhoto() {
+        const prev = (this.currentPhotoIndex - 1 + this.photoCount) % this.photoCount;
+        this.setPhoto(prev);
+      },
+
+      // Guest identification handler
+      handleGuestSubmit(e) {
+        e.preventDefault();
+        const nameInput = document.getElementById('input-guest-name');
+        const phoneInput = document.getElementById('input-guest-phone');
+        const consentInput = document.getElementById('input-consent');
+
+        const errName = document.getElementById('err-name');
+        const errPhone = document.getElementById('err-phone');
+        const errConsent = document.getElementById('err-consent');
+        const formError = document.getElementById('form-error');
+        const formLoading = document.getElementById('form-loading');
+        const formSuccess = document.getElementById('form-success');
+        const submitBtn = document.getElementById('btn-submit-guest');
+
+        errName.classList.add('hidden');
+        errPhone.classList.add('hidden');
+        errConsent.classList.add('hidden');
+        formError.classList.add('hidden');
+
+        const nameVal = nameInput.value.trim();
+        const phoneVal = phoneInput.value.trim();
+        let valid = true;
+
+        // Check full name (at least 2 words)
+        const nameParts = nameVal.split(/\s+/).filter(Boolean);
+        if (nameParts.length < 2 || nameVal.length < 5) {
+          errName.classList.remove('hidden');
+          valid = false;
+        }
+
+        // Phone check
+        const cleanPhone = phoneVal.replace(/\D/g, '');
+        if (cleanPhone.length < 10 || cleanPhone.length > 12) {
+          errPhone.classList.remove('hidden');
+          valid = false;
+        }
+
+        if (!consentInput.checked) {
+          errConsent.classList.remove('hidden');
+          valid = false;
+        }
+
+        if (!valid) {
+          formError.classList.remove('hidden');
+          return;
+        }
+
+        // Simulate affectionate human state loading
+        submitBtn.disabled = true;
+        formLoading.classList.remove('hidden');
+
+        setTimeout(() => {
+          formLoading.classList.add('hidden');
+          formSuccess.classList.remove('hidden');
+          this.guestData = { name: nameVal, phone: phoneVal };
+          try {
+            localStorage.setItem('ps_guest_user', JSON.stringify(this.guestData));
+          } catch(err) {}
+
+          this.updateGuestBadge();
+
+          setTimeout(() => {
+            submitBtn.disabled = false;
+            formSuccess.classList.add('hidden');
+            this.goToPage('lista');
+          }, 600);
+        }, 500);
+      },
+
+      updateGuestBadge() {
+        if (!this.guestData) return;
+        const pill = document.getElementById('guest-badge');
+        const nameText = document.getElementById('guest-name-pill');
+        if (pill && nameText) {
+          pill.classList.remove('hidden');
+          nameText.textContent = this.guestData.name.split(' ')[0];
+        }
+      },
+
+      // Gift Filters & Render
+      setCategory(cat) {
+        this.activeCategory = cat;
+        document.querySelectorAll('.cat-pill').forEach(btn => {
+          if (btn.getAttribute('data-cat') === cat) {
+            btn.className = 'cat-pill shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition bg-terracotta-500 text-white shadow-2xs';
+          } else {
+            btn.className = 'cat-pill shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition bg-white border border-sand text-charcoal-700 hover:bg-ivory-200';
+          }
+        });
+        this.filterGifts();
+      },
+
+      togglePriorityFilter() {
+        this.onlyPriority = !this.onlyPriority;
+        const btn = document.getElementById('filter-priority-btn');
+        if (this.onlyPriority) {
+          btn.className = 'px-2.5 py-1 rounded-lg border text-xs font-medium transition flex items-center gap-1 bg-terracotta-500 text-white border-terracotta-600 shadow-2xs';
+        } else {
+          btn.className = 'px-2.5 py-1 rounded-lg border text-xs font-medium transition flex items-center gap-1 bg-white border-sand text-charcoal-700 hover:border-terracotta-500';
+        }
+        this.filterGifts();
+      },
+
+      filterGifts() {
+        const searchInput = document.getElementById('gift-search');
+        this.searchQuery = searchInput.value.toLowerCase().trim();
+        const clearBtn = document.getElementById('search-clear-btn');
+        if (this.searchQuery.length > 0) {
+          clearBtn.classList.remove('hidden');
+        } else {
+          clearBtn.classList.add('hidden');
+        }
+
+        const sortSelect = document.getElementById('gift-sort');
+        this.sortMode = sortSelect.value;
+
+        this.renderGifts();
+      },
+
+      clearSearch() {
+        const searchInput = document.getElementById('gift-search');
+        searchInput.value = '';
+        this.filterGifts();
+      },
+
+      resetAllFilters() {
+        this.activeCategory = 'todos';
+        this.onlyPriority = false;
+        this.searchQuery = '';
+        const searchInput = document.getElementById('gift-search');
+        if (searchInput) searchInput.value = '';
+        document.getElementById('gift-sort').value = 'default';
+        this.setCategory('todos');
+        const priBtn = document.getElementById('filter-priority-btn');
+        priBtn.className = 'px-2.5 py-1 rounded-lg border text-xs font-medium transition flex items-center gap-1 bg-white border-sand text-charcoal-700 hover:border-terracotta-500';
+        this.filterGifts();
+      },
+
+      renderGifts() {
+        const grid = document.getElementById('gift-cards-grid');
+        const emptyState = document.getElementById('gifts-empty-state');
+        const countersEl = document.getElementById('gifts-counters');
+
+        let filtered = GIFTS_DATABASE.filter(item => {
+          if (this.activeCategory !== 'todos' && item.cat !== this.activeCategory) {
+            return false;
+          }
+          if (this.onlyPriority && !item.priority) {
+            return false;
+          }
+          if (this.searchQuery && !item.name.toLowerCase().includes(this.searchQuery) && !item.desc.toLowerCase().includes(this.searchQuery)) {
+            return false;
+          }
+          return true;
+        });
+
+        // Sort
+        if (this.sortMode === 'price-asc') {
+          filtered.sort((a, b) => a.pix - b.pix);
+        } else if (this.sortMode === 'price-desc') {
+          filtered.sort((a, b) => b.pix - a.pix);
+        } else if (this.sortMode === 'name-asc') {
+          filtered.sort((a, b) => a.name.localeCompare(b.name));
+        }
+
+        // Available count
+        const availableCount = GIFTS_DATABASE.length - this.unavailableGifts.length;
+        countersEl.textContent = `${availableCount} disponíveis • ${this.unavailableGifts.length} já presenteados`;
+
+        if (filtered.length === 0) {
+          grid.innerHTML = '';
+          emptyState.classList.remove('hidden');
+          return;
+        } else {
+          emptyState.classList.add('hidden');
+        }
+
+        let html = '';
+        filtered.forEach(item => {
+          const isSelected = this.selectedGift && this.selectedGift.id === item.id;
+          const isUnavailable = this.unavailableGifts.includes(item.id);
+
+          const pixFormatted = item.pix.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+          const cardFormatted = item.card.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+          const hasCardDiff = item.card !== item.pix;
+
+          html += `
+            <div class="group relative rounded-2xl p-4 transition-all duration-200 border ${
+              isSelected
+                ? 'bg-terracotta-50/70 border-terracotta-500 ring-2 ring-terracotta-500/30 shadow-sm'
+                : isUnavailable
+                  ? 'bg-ivory-200/50 border-sand/60 opacity-70'
+                  : 'bg-ivory-50 border-sand/80 hover:border-terracotta-500/50 hover:shadow-xs'
+            } flex flex-col justify-between">
+
+              <!-- Card Top Header -->
+              <div>
+                <div class="flex items-start justify-between gap-2 mb-2">
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="text-[11px] font-medium px-2 py-0.5 rounded-md bg-ivory-200 text-charcoal-700">
+                      ${item.cat}
+                    </span>
+                    ${item.priority ? `
+                      <span class="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-md bg-gold/20 text-charcoal-800 border border-gold/30">
+                        <i data-lucide="star" class="w-3 h-3 text-gold"></i>
+                        Prioridade
+                      </span>
+                    ` : ''}
+                  </div>
+                  <span class="text-[10px] font-mono text-charcoal-400">${item.id}</span>
+                </div>
+
+                <!-- Product Title & Visual Thumbnail -->
+                <div class="flex gap-3 items-start my-2">
+                  <div class="w-14 h-14 rounded-xl bg-ivory-200/80 border border-sand/60 flex items-center justify-center shrink-0 text-terracotta-600">
+                    <i data-lucide="${item.icon || 'gift'}" class="w-6 h-6"></i>
+                  </div>
+                  <div class="space-y-0.5">
+                    <h3 class="font-serif text-lg font-medium text-charcoal-900 leading-snug">
+                      ${item.name}
+                    </h3>
+                    <p class="text-xs text-charcoal-600 line-clamp-2 leading-relaxed">
+                      ${item.desc}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Prices & Action Button -->
+              <div class="mt-4 pt-3 border-t border-sand/50 space-y-3">
+                <div class="flex items-baseline justify-between">
+                  <div>
+                    <span class="text-[11px] text-charcoal-500 block">Valor via Pix:</span>
+                    <span class="font-serif text-lg font-bold text-olive-700">${pixFormatted}</span>
+                  </div>
+                  ${hasCardDiff ? `
+                    <div class="text-right">
+                      <span class="text-[10px] text-charcoal-500 block">No Cartão:</span>
+                      <span class="text-xs font-medium text-charcoal-700">${cardFormatted}</span>
+                    </div>
+                  ` : ''}
+                </div>
+
+                ${isUnavailable ? `
+                  <button disabled class="w-full py-2.5 px-4 rounded-xl bg-sand/60 text-charcoal-500 text-xs font-medium cursor-not-allowed flex items-center justify-center gap-1.5">
+                    <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                    <span>Presente já escolhido com amor</span>
+                  </button>
+                ` : isSelected ? `
+                  <div class="flex gap-2">
+                    <button onclick="app.goToPage('resumo')" class="flex-1 py-2.5 px-3 rounded-xl bg-terracotta-500 hover:bg-terracotta-600 text-white text-xs font-semibold flex items-center justify-center gap-1 shadow-2xs transition">
+                      <span>Confirmar Escolha</span>
+                      <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <button onclick="app.unselectGift()" title="Desmarcar" class="px-3 py-2.5 rounded-xl border border-terracotta-500/40 text-terracotta-700 hover:bg-terracotta-100 text-xs font-medium transition">
+                      Trocar
+                    </button>
+                  </div>
+                ` : `
+                  <button onclick="app.chooseGift('${item.id}')" class="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-terracotta-500 hover:text-white border border-sand text-charcoal-800 text-xs font-medium transition-all flex items-center justify-center gap-2 group-hover:border-terracotta-500 shadow-2xs">
+                    <i data-lucide="heart" class="w-3.5 h-3.5 text-terracotta-500 group-hover:text-white transition-colors"></i>
+                    <span>Escolher este presente</span>
+                  </button>
+                `}
+              </div>
+
+            </div>
+          `;
+        });
+
+        grid.innerHTML = html;
+        if (window.lucide) lucide.createIcons();
+      },
+
+      chooseGift(giftId) {
+        const item = GIFTS_DATABASE.find(g => g.id === giftId);
+        if (!item) return;
+
+        // Ensure guest is identified
+        if (!this.guestData) {
+          this.selectedGift = item;
+          this.goToPage('identificacao');
+          return;
+        }
+
+        this.selectedGift = item;
+        this.updateSelectedBanner();
+        this.renderGifts();
+        this.updateHeaderState();
+
+        // Update pages data
+        this.fillSummaryData();
+        this.goToPage('resumo');
+      },
+
+      unselectGift() {
+        this.selectedGift = null;
+        this.updateSelectedBanner();
+        this.renderGifts();
+        this.updateHeaderState();
+      },
+
+      updateSelectedBanner() {
+        const banner = document.getElementById('active-gift-banner');
+        const nameEl = document.getElementById('banner-gift-name');
+        if (this.selectedGift) {
+          banner.classList.remove('hidden');
+          nameEl.textContent = this.selectedGift.name;
+        } else {
+          banner.classList.add('hidden');
+        }
+      },
+
+      openCartOrList() {
+        if (this.selectedGift) {
+          this.fillSummaryData();
+          this.goToPage('resumo');
+        } else {
+          this.goToPage('lista');
+        }
+      },
+
+      fillSummaryData() {
+        if (!this.selectedGift) return;
+        const g = this.selectedGift;
+        const pixF = g.pix.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        const cardF = g.card.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+        document.getElementById('resumo-title').textContent = g.name;
+        document.getElementById('resumo-category').textContent = g.cat;
+        document.getElementById('resumo-code').textContent = `Código: ${g.id}`;
+        document.getElementById('resumo-price-pix').textContent = pixF;
+        document.getElementById('resumo-price-card').textContent = cardF;
+        document.getElementById('resumo-guest-name').textContent = this.guestData ? this.guestData.name : 'Convidado';
+
+        // Payment page
+        document.getElementById('pay-item-title').textContent = g.name;
+        document.getElementById('pay-item-code').textContent = g.id;
+        document.getElementById('pay-pix-val').textContent = pixF;
+        document.getElementById('pay-card-val').textContent = cardF;
+
+        // Pix page
+        document.getElementById('pix-det-item').textContent = g.name;
+        document.getElementById('pix-det-code').textContent = g.id;
+        document.getElementById('pix-det-val').textContent = pixF;
+
+        // Gera um BR Code Pix real, com valor e identificador do presente.
+        const dynamicPayload = this.buildPixPayload(g.pix, g.id);
+        document.getElementById('pix-copy-input').value = dynamicPayload;
+        this.renderPixQrCode(dynamicPayload);
+
+        // Card page
+        document.getElementById('card-guest-name').textContent = this.guestData ? this.guestData.name : 'Convidado';
+        document.getElementById('card-item-title').textContent = g.name;
+        document.getElementById('card-item-code').textContent = g.id;
+        document.getElementById('card-item-price').textContent = cardF;
+      },
+
+      pixField(id, value) {
+        return id + String(value.length).padStart(2, '0') + value;
+      },
+
+      crc16(payload) {
+        let crc = 0xFFFF;
+        for (let i = 0; i < payload.length; i++) {
+          crc ^= payload.charCodeAt(i) << 8;
+          for (let bit = 0; bit < 8; bit++) {
+            crc = (crc & 0x8000) ? ((crc << 1) ^ 0x1021) : (crc << 1);
+            crc &= 0xFFFF;
+          }
+        }
+        return crc.toString(16).toUpperCase().padStart(4, '0');
+      },
+
+      buildPixPayload(amount, giftId) {
+        const key = 'pedroh.16@hotmail.com';
+        const merchantName = 'PEDRO HENRIQUE SANTOS';
+        const merchantCity = 'UBAIRA';
+        const txid = String(giftId).replace(/[^A-Za-z0-9]/g, '').slice(0, 25) || 'PRESENTE';
+        const amountText = Number(amount).toFixed(2);
+
+        const merchantAccount = this.pixField('00', 'BR.GOV.BCB.PIX') + this.pixField('01', key);
+        const additionalData = this.pixField('05', txid);
+        const payloadWithoutCrc = [
+          this.pixField('00', '01'),
+          this.pixField('26', merchantAccount),
+          this.pixField('52', '0000'),
+          this.pixField('53', '986'),
+          this.pixField('54', amountText),
+          this.pixField('58', 'BR'),
+          this.pixField('59', merchantName),
+          this.pixField('60', merchantCity),
+          this.pixField('62', additionalData),
+          '6304'
+        ].join('');
+
+        return payloadWithoutCrc + this.crc16(payloadWithoutCrc);
+      },
+
+      renderPixQrCode(payload) {
+        const container = document.getElementById('qrcode');
+        if (!container || typeof QRCode === 'undefined') return;
+        container.innerHTML = '';
+        new QRCode(container, {
+          text: payload,
+          width: 210,
+          height: 210,
+          colorDark: '#23201D',
+          colorLight: '#FFFFFF',
+          correctLevel: QRCode.CorrectLevel.M
+        });
+      },
+
+      selectPaymentMethod(method) {
+        this.selectedPayment = method;
+        const pixBox = document.getElementById('option-pix-box');
+        const cardBox = document.getElementById('option-card-box');
+        const pixDot = document.getElementById('pix-radio-dot');
+        const cardDot = document.getElementById('card-radio-dot');
+
+        if (method === 'pix') {
+          pixBox.className = 'p-4 rounded-2xl border-2 border-terracotta-500 bg-terracotta-50/60 cursor-pointer transition-all shadow-xs space-y-2';
+          cardBox.className = 'p-4 rounded-2xl border-2 border-sand bg-white cursor-pointer hover:border-sand/90 transition-all space-y-2';
+          pixDot.className = 'w-2.5 h-2.5 rounded-full bg-terracotta-500';
+          cardDot.className = 'w-2.5 h-2.5 rounded-full bg-transparent';
+        } else {
+          cardBox.className = 'p-4 rounded-2xl border-2 border-terracotta-500 bg-terracotta-50/60 cursor-pointer transition-all shadow-xs space-y-2';
+          pixBox.className = 'p-4 rounded-2xl border-2 border-sand bg-white cursor-pointer hover:border-sand/90 transition-all space-y-2';
+          cardDot.className = 'w-2.5 h-2.5 rounded-full bg-terracotta-500';
+          pixDot.className = 'w-2.5 h-2.5 rounded-full bg-transparent';
+        }
+      },
+
+      proceedPaymentChoice() {
+        if (this.selectedPayment === 'pix') {
+          this.goToPage('pix');
+        } else {
+          this.goToPage('cartao');
+        }
+      },
+
+      copyPixCode() {
+        const input = document.getElementById('pix-copy-input');
+        input.select();
+        input.setSelectionRange(0, 99999);
+        navigator.clipboard.writeText(input.value).then(() => {
+          const toast = document.getElementById('pix-copied-toast');
+          const btnText = document.getElementById('btn-copy-text');
+          toast.classList.remove('hidden');
+          btnText.textContent = 'Copiado!';
+          setTimeout(() => {
+            btnText.textContent = 'Copiar';
+          }, 3000);
+        }).catch(() => {
+          document.execCommand('copy');
+          document.getElementById('pix-copied-toast').classList.remove('hidden');
+        });
+      },
+
+      sendPixVoucherWhatsApp() {
+        if (!this.selectedGift) return;
+        const guestName = this.guestData ? this.guestData.name : 'Convidado';
+        const val = this.selectedGift.pix.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        const text = encodeURIComponent(
+          `Olá, Pedro e Samara! Sou ${guestName}.\n` +
+          `Acabei de fazer o pagamento via Pix do presente:\n` +
+          `Presente: ${this.selectedGift.name}\n` +
+          `Código: ${this.selectedGift.id}\n` +
+          `Valor: ${val}\n\n` +
+          `Estou enviando este comprovante para confirmar com carinho!`
+        );
+        window.open(`https://wa.me/557588861151?text=${text}`, '_blank');
+      },
+
+      openWhatsAppCard() {
+        if (!this.selectedGift) return;
+        const guestName = this.guestData ? this.guestData.name : 'Convidado';
+        const val = this.selectedGift.card.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        const text = encodeURIComponent(
+          `Olá, Pedro! Sou ${guestName} e gostaria de presentear você e a Samara com:\n` +
+          `Presente: ${this.selectedGift.name}\n` +
+          `Código: ${this.selectedGift.id}\n` +
+          `Valor: ${val}\n` +
+          `Pode me enviar o link para pagamento no cartão?`
+        );
+        window.open(`https://wa.me/557588861151?text=${text}`, '_blank');
+      },
+
+      shareWebsite() {
+        const shareData = {
+          title: 'Pedro & Samara — Lista de Presentes & Novo Lar',
+          text: 'Confira a lista de presentes do Pedro & Samara.',
+          url: window.location.href,
+        };
+
+        if (navigator.share) {
+          navigator.share(shareData).catch(() => {});
+        } else {
+          navigator.clipboard.writeText(window.location.href).then(() => {
+            const toast = document.getElementById('share-copied-toast');
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+              toast.classList.add('hidden');
+            }, 3500);
+          });
+        }
+      }
+    };
+
+    // Auto-init on DOM loaded
+    document.addEventListener('DOMContentLoaded', () => {
+      app.init();
+    });
+  </script>
+
+
+  <script src="registry-config.js"></script>
+  <script src="product-images.js"></script>
+  <script src="phone-utils.js"></script>
+  <script src="registry-ui.js"></script>
+  <script src="registry-integration.js"></script>
+</body></html>

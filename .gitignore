@@ -1,0 +1,32 @@
+# Publicar somente o frontend e a configuração do GitHub Pages.
+# Arquivos administrativos, testes, backups e documentos locais ficam privados.
+/*
+!/.gitignore
+!/.gitattributes
+!/README.md
+!/.github/
+/.github/*
+!/.github/workflows/
+/.github/workflows/*
+!/.github/workflows/pages.yml
+!/site/
+/site/*
+!/site/index.html
+!/site/registry-config.js
+!/site/registry-integration.js
+!/site/registry-ui.js
+!/site/registry-ui.css
+!/site/product-images.js
+!/site/phone-utils.js
+!/site/.nojekyll
+!/site/assets/
+/site/assets/*
+!/site/assets/monogram.svg
+!/site/assets/couple/
+/site/assets/couple/*
+!/site/assets/couple/*.webp
+!/site/assets/products/
+/site/assets/products/*
+!/site/assets/products/*.webp
+!/site/assets/products/credits.html
+!/site/assets/products/CREDITS.md
